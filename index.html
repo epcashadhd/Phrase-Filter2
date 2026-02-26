@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>專業社交界線 - 訊息解碼練習</title>
+    <style>
+        /* 禁止頁面滾動，保持在單一畫面 */
+        html, body {
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background-color: #f0f4f8;
+            margin: 0;
+            font-family: 'PingFang HK', 'Microsoft JhengHei', sans-serif;
+        }
+
+        body { display: flex; flex-direction: column; align-items: center; height: 100vh; }
+
+        #nav-area { position: absolute; top: 20px; left: 20px; z-index: 10; }
+        .nav-btn {
+            padding: 12px 20px; background: #455a64; color: white; border: none;
+            border-radius: 8px; font-size: 1rem; cursor: pointer;
+            box-shadow: 0 4px 0 #263238; transition: all 0.2s;
+        }
+        .nav-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #263238; }
+
+        #header-title { margin-top: 20px; color: #2c3e50; font-size: 1.5rem; text-align: center; }
+
+        #draw-area { height: 15%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; }
+        #counter-tag { background: #546e7a; color: white; padding: 4px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; margin-bottom: 8px; }
+        
+        #draw-box {
+            width: 90px; height: 70px; background: #fb8c00; border: 4px solid #ef6c00;
+            border-radius: 12px; display: flex; justify-content: center;
+            align-items: center; font-size: 2.2rem; box-shadow: 0 5px 0 #e65100;
+            cursor: pointer; transition: transform 0.2s;
+        }
+        #draw-box:hover { transform: scale(1.05); }
+        #draw-box:active { transform: scale(0.95) translateY(4px); box-shadow: 0 1px 0 #e65100; }
+
+        #floating-area { height: 35%; width: 100%; position: relative; display: flex; justify-content: center; align-items: center; }
+        
+        .sentence-strip {
+            padding: 20px 30px; background: #ffffff; border: 2px solid #2c3e50; border-radius: 15px;
+            font-size: 1.2rem; font-weight: 600; display: flex; align-items: center;
+            gap: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            position: absolute; touch-action: none; z-index: 100;
+            user-select: none; cursor: grab; max-width: 80%;
+        }
+
+        .audio-btn {
+            background: #2196f3; color: white; border: none; border-radius: 50%;
+            min-width: 40px; height: 40px; font-size: 1rem;
+            display: flex; justify-content: center; align-items: center; cursor: pointer;
+        }
+
+        #boxes-container { height: 45%; width: 100%; display: flex; justify-content: space-around; align-items: flex-start; padding: 15px; box-sizing: border-box; }
+        .box {
+            width: 31%; height: 180px; border-radius: 20px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold;
+            border: 4px dashed rgba(0,0,0,0.1); text-align: center; padding: 10px;
+            transition: all 0.3s;
+        }
+        #box-positive { background-color: #e8f5e9; color: #2e7d32; }
+        #box-neutral { background-color: #e3f2fd; color: #1565c0; }
+        #box-negative { background-color: #ffebee; color: #c62828; }
+        .box.active-drop { transform: scale(1.1); border: 4px solid #333; box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+
+        /* 回饋層 */
+        .overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 500; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center; padding: 20px; box-sizing: border-box;
+        }
+        
+        .feedback-content {
+            background: white; padding: 30px; border-radius: 20px; max-width: 500px; width: 90%;
+        }
+
+        #fb-quote {
+            background: #f8f9fa; padding: 15px; border-radius: 10px; font-size: 1.1rem;
+            color: #34495e; margin-bottom: 20px; border-left: 6px solid #fb8c00;
+            display: block; line-height: 1.5; text-align: left;
+        }
+
+        #library-content { width: 100%; max-width: 800px; height: 70%; overflow-y: auto; padding: 15px; background: #fff; border-radius: 10px; }
+        .lib-item { padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; text-align: left;}
+        .tag { font-size: 0.75rem; padding: 3px 8px; border-radius: 5px; color: white; margin-left: 10px; flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+<div id="nav-area"><button class="nav-btn" onclick="openLibrary()">句子總覽 📋</button></div>
+
+<div id="header-title"><b>F.5 專業界線解碼練習</b></div>
+
+<div id="draw-area">
+    <div id="counter-tag">剩餘題目：<span id="count-num">0</span></div>
+    <div id="draw-box" onclick="drawNew()">✉️</div>
+</div>
+
+<div id="floating-area"></div>
+
+<div id="boxes-container">
+    <div id="box-positive" class="box" data-type="positive">正向 / 支援 👍<br><small>老師在協助我</small></div>
+    <div id="box-neutral" class="box" data-type="neutral">中性 / 程序 🔵<br><small>日常規則或教學</small></div>
+    <div id="box-negative" class="box" data-type="negative">負面 / 責備 ⚠️<br><small>帶有情緒批評</small></div>
+</div>
+
+<div id="feedback-overlay" class="overlay">
+    <div class="feedback-content">
+        <span id="fb-quote"></span>
+        <h1 id="fb-icon" style="font-size: 3rem; margin: 0;"></h1>
+        <h2 id="fb-msg" style="margin: 15px 0; font-size: 1.2rem; color: #2c3e50;"></h2>
+        <button onclick="closeFeedback()" style="padding: 12px 40px; font-size: 1.1rem; border-radius: 10px; background: #2c3e50; color: white; border: none; cursor: pointer;">明白</button>
+    </div>
+</div>
+
+<div id="library-overlay" class="overlay" style="background:#f0f4f8; z-index:600;">
+    <h2 style="color:#2c3e50">句子庫全集 📋</h2>
+    <div id="library-content"></div>
+    <button onclick="closeLibrary()" style="margin-top: 20px; padding: 12px 40px; border-radius: 10px; background: #455a64; color: white; border: none; cursor: pointer;">返回練習</button>
+</div>
+
+<script>
+    const allData = [
+        // Positive / Neutral
+        { text: "「這份練習你拿回去試試看，不一定要交。」", type: "positive", reason: "這是老師提供的額外支援，給予你學習彈性。" },
+        { text: "「你的筆掉了，請撿起來。」", type: "neutral", reason: "這是中性的環境提醒，不帶有個人針對。" },
+        { text: "「我今天預備了多一份筆記給你參考。」", type: "positive", reason: "老師觀察到你的需要，這是積極的學術協助。" },
+        { text: "「這題如果你覺得難，可以先跳過。」", type: "positive", reason: "這是教學策略建議，目的是減少你的壓力。" },
+        { text: "「全班同學請打開書本第 20 頁。」", type: "neutral", reason: "這是對全體的行政指令，無關個人表現。" },
+        { text: "「如果這題你暫時想不通，我們先討論下一題。」", type: "positive", reason: "這是時間管理建議，幫助你保持學習進度。" },
+        { text: "「我現在要準備下一堂課，有問題請在明天第一節小息找我。」", type: "neutral", reason: "這是專業界線的表達，說明老師目前的職責。" },
+        { text: "「現在是全班分組討論時間，請先跟組員溝通。」", type: "neutral", reason: "這是引導你遵守課堂流程與社交互動。" },
+        { text: "「這題你可以先看參考答案，如果還是不明白，我們課後再談。」", type: "positive", reason: "老師提供解決方案並承諾後續支援。" },
+        { text: "「我看你好像有點氣憤，需要去洗個臉冷靜一下嗎？」", type: "positive", reason: "老師察覺你的情緒並提供空間緩衝，是關懷的表現。" },
+        { text: "「這不是針對你個人，這是全班都要遵守的課室守則。」", type: "neutral", reason: "老師在重申系統規則的公平性。" },
+        { text: "「你剛才的提問很有趣，但我需要先完成這部分的進度才能回應你。」", type: "neutral", reason: "這是教學進度的權衡，並非否定你的問題。" },
+        { text: "「我留意到你剛才的反應比較大，我們可以先停一停，呼吸一下。」", type: "positive", reason: "這是在協助你建立延遲反應的能力。" },
+
+        // Negative
+        { text: "「你為什麼每次都犯同樣的錯誤？到底有沒有用心聽？」", type: "negative", reason: "這句話帶有負面標籤與個人攻擊。" },
+        { text: "「全班只有你還沒交功課，你這樣非常不負責任。」", type: "negative", reason: "老師使用了批判性的語氣來評斷你的人格。" },
+        { text: "「你剛才的行為非常自私，完全沒有顧及其他同學。」", type: "negative", reason: "這是帶有情緒的責備，而非中性的行為修正。" },
+        { text: "「如果你再這樣不聽指令，我就要通知訓導主任處理。」", type: "negative", reason: "這是威脅式溝通，會引起不必要的焦慮。" },
+        { text: "「你這種學習態度，到了 DSE 考試一定會失敗。」", type: "negative", reason: "這是對未來的負面預言，缺乏建設性。" },
+        { text: "「你不要再不停問同樣的問題了，我很煩。」", type: "negative", reason: "老師表達了個人厭煩情緒，這是不專業的反應。" },
+        { text: "「我現在沒空理你，你自己去一邊反省一下。」", type: "negative", reason: "這種驅趕式的回應會損害師生信任。" },
+        { text: "「這點小事你都處理不到嗎？為什麼一定要來麻煩我？」", type: "negative", reason: "這帶有嘲諷意味，否定了你的求助需要。" }
+    ];
+
+    let pool = [...allData];
+    let activeItem = null;
+    let lastCorrect = false;
+
+    function updateCounter() { document.getElementById('count-num').textContent = pool.length; }
+
+    function speakFiltered(text) {
+        window.speechSynthesis.cancel();
+        const cleanText = text.replace(/「|」/g, "");
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.lang = 'zh-HK';
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function drawNew() {
+        if (activeItem) pool.push(activeItem);
+        const area = document.getElementById('floating-area');
+        area.innerHTML = '';
+        if (pool.length === 0) {
+            alert("你已完成所有練習！做得好！");
+            pool = [...allData];
+            updateCounter();
+            return;
+        }
+        
+        const idx = Math.floor(Math.random() * pool.length);
+        activeItem = pool.splice(idx, 1)[0];
+        
+        const strip = document.createElement('div');
+        strip.className = 'sentence-strip';
+        strip.id = 'current-strip';
+        strip.innerHTML = `<span>${activeItem.text}</span><button class="audio-btn" onclick="event.stopPropagation(); speakFiltered('${activeItem.text}')">📢</button>`;
+        
+        area.appendChild(strip);
+        makeDraggable(strip);
+        updateCounter();
+    }
+
+    function makeDraggable(el) {
+        let isDragging = false;
+        let startX, startY;
+
+        const onStart = (e) => {
+            isDragging = true;
+            const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+            const rect = el.getBoundingClientRect();
+            startX = clientX - rect.left;
+            startY = clientY - rect.top;
+            el.style.transition = 'none';
+        };
+
+        const onMove = (e) => {
+            if (!isDragging) return;
+            if (e.type.includes('touch')) e.preventDefault();
+            const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+            el.style.position = 'fixed';
+            el.style.left = (clientX - startX) + 'px';
+            el.style.top = (clientY - startY) + 'px';
+            checkCollision(clientX, clientY);
+        };
+
+        const onEnd = (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            const clientX = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX;
+            const clientY = e.type.includes('touch') ? e.changedTouches[0].clientY : e.clientY;
+            
+            const boxType = getDroppedBox(clientX, clientY);
+            if (boxType) {
+                handleDropLogic(boxType);
+            } else {
+                el.style.transition = 'all 0.3s';
+                el.style.left = '50%'; el.style.top = '50%';
+                el.style.position = 'absolute';
+                el.style.transform = 'translate(-50%, -50%)';
+            }
+            document.querySelectorAll('.box').forEach(b => b.classList.remove('active-drop'));
+        };
+
+        el.addEventListener('mousedown', onStart);
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onEnd);
+        el.addEventListener('touchstart', onStart, {passive: false});
+        window.addEventListener('touchmove', onMove, {passive: false});
+        window.addEventListener('touchend', onEnd);
+    }
+
+    function checkCollision(x, y) {
+        document.querySelectorAll('.box').forEach(box => {
+            const rect = box.getBoundingClientRect();
+            if (x > rect.left && x < rect.right && y > rect.top && y < rect.bottom) box.classList.add('active-drop');
+            else box.classList.remove('active-drop');
+        });
+    }
+
+    function getDroppedBox(x, y) {
+        let res = null;
+        document.querySelectorAll('.box').forEach(box => {
+            const rect = box.getBoundingClientRect();
+            if (x > rect.left && x < rect.right && y > rect.top && y < rect.bottom) res = box.getAttribute('data-type');
+        });
+        return res;
+    }
+
+    function handleDropLogic(boxType) {
+        // 判斷邏輯：如果題目是 positive 或 neutral，放進這兩個盒都算對；negative 必須放進 negative 盒
+        if (activeItem.type === 'negative') {
+            lastCorrect = (boxType === 'negative');
+        } else {
+            lastCorrect = (boxType === 'positive' || boxType === 'neutral');
+        }
+
+        const strip = document.getElementById('current-strip');
+        if (lastCorrect) strip.style.display = 'none';
+        
+        document.getElementById('fb-quote').textContent = activeItem.text;
+        document.getElementById('feedback-overlay').style.display = 'flex';
+        
+        if (lastCorrect) {
+            document.getElementById('fb-icon').textContent = "✅";
+            document.getElementById('fb-msg').innerHTML = "解碼正確！<br><br>" + activeItem.reason;
+        } else {
+            document.getElementById('fb-icon').textContent = "❌";
+            document.getElementById('fb-msg').textContent = "這句話的意圖可能不是你想像的那樣，再試一次？";
+            strip.style.transition = 'all 0.3s';
+            strip.style.left = '50%'; strip.style.top = '50%';
+            strip.style.position = 'absolute'; strip.style.transform = 'translate(-50%, -50%)';
+        }
+    }
+
+    function closeFeedback() {
+        document.getElementById('feedback-overlay').style.display = 'none';
+        if (lastCorrect) {
+            document.getElementById('floating-area').innerHTML = '';
+            activeItem = null;
+            updateCounter();
+        }
+    }
+
+    function openLibrary() {
+        const list = document.getElementById('library-content');
+        list.innerHTML = allData.map(s => `
+            <div class="lib-item">
+                <span>${s.text}</span>
+                <span class="tag" style="background:${s.type==='positive'?'#2e7d32':s.type==='neutral'?'#1565c0':'#c62828'}">
+                    ${s.type === 'positive' ? '支援' : s.type === 'neutral' ? '程序' : '負面'}
+                </span>
+            </div>
+        `).join('');
+        document.getElementById('library-overlay').style.display = 'flex';
+    }
+    function closeLibrary() { document.getElementById('library-overlay').style.display = 'none'; }
+    updateCounter();
+</script>
+</body>
+</html>
