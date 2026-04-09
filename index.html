@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>字詞多面體 - 終極穩定版</title>
+    <title>字詞多面體 - 滾動修復版</title>
     <style>
         html, body {
             overflow: hidden;
@@ -27,30 +27,21 @@
             box-shadow: 0 1px 0 rgba(0,0,0,0.2) !important;
         }
 
-        /* 導航區域佈局 */
-        #nav-area { position: absolute; top: 20px; left: 20px; z-index: 10; display: flex; gap: 10px; }
+        #nav-area { position: absolute; top: 20px; left: 20px; z-index: 10; }
         .nav-btn {
             padding: 10px 18px; background: #607d8b; color: white; border: none;
-            border-radius: 8px; font-size: 0.9rem;
-            box-shadow: 0 4px 0 #455a64;
+            border-radius: 8px; font-size: 0.9rem; box-shadow: 0 4px 0 #455a64;
         }
 
-        /* 右上角重置按鈕 */
         #reset-area { position: absolute; top: 20px; right: 20px; z-index: 10; }
         .reset-btn {
             padding: 10px 18px; background: #2196F3; color: white; border: none;
-            border-radius: 8px; font-size: 0.9rem;
-            box-shadow: 0 4px 0 #1976D2;
+            border-radius: 8px; font-size: 0.9rem; box-shadow: 0 4px 0 #1976D2;
         }
 
         #top-header-container {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 5px;
-            gap: 20px;
-            position: relative;
+            width: 100%; display: flex; justify-content: center; align-items: center;
+            margin-top: 5px; gap: 20px; position: relative;
         }
 
         .header-center { display: flex; flex-direction: column; align-items: center; z-index: 5; }
@@ -68,6 +59,7 @@
             opacity: 0.3; transition: all 0.3s ease;
         }
         .role-container.active { opacity: 1; transform: scale(1.05); }
+        .role-container:active { transform: translateY(3px) scale(0.98); }
         .role-pic { width: 180px; height: auto; max-height: 180px; object-fit: contain; -webkit-user-drag: none; }
         .role-label { margin-top: -5px; font-weight: bold; color: #37474f; font-size: 1.1rem; }
 
@@ -77,11 +69,9 @@
         .sentence-strip {
             padding: 20px 30px; background: #ffffff; border: 3px solid #333; border-radius: 15px;
             font-size: 1.3rem; font-weight: bold; display: flex; align-items: center;
-            justify-content: space-between;
-            gap: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            justify-content: space-between; gap: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
             position: absolute; touch-action: none; z-index: 100;
-            user-select: none; cursor: grab; 
-            width: 70%; max-width: 600px; min-width: 320px;
+            user-select: none; cursor: grab; width: 70%; max-width: 600px; min-width: 320px;
             box-sizing: border-box; will-change: transform;
         }
 
@@ -107,35 +97,63 @@
         /* Overlay */
         .overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.9); z-index: 500; flex-direction: column;
+            background: rgba(255,255,255,0.95); z-index: 500; flex-direction: column;
             justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; backdrop-filter: blur(5px);
         }
+
+        /* 句子管理面板修復滾動 */
+        #library-content-wrapper { 
+            width: 100%; 
+            max-width: 950px; 
+            height: 85%; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            overflow: hidden; /* 防止外層滾動 */
+        }
+
+        #library-list { 
+            flex: 1; 
+            overflow-y: auto; /* 核心修復：允許垂直滾動 */
+            -webkit-overflow-scrolling: touch; /* iOS 順滑滾動 */
+            background: #fff; 
+            border-radius: 10px; 
+            padding: 10px; 
+            border: 1px solid #eee; 
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Mac 捲軸美化 */
+        #library-list::-webkit-scrollbar { width: 8px; }
+        #library-list::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        #library-list::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
+        #library-list::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        .lib-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; text-align: left; }
+        .lib-item.practiced { background-color: #f2f2f2; opacity: 0.5; }
+        .tag-container { display: flex; gap: 5px; margin-top: 5px; }
+        .tag { font-size: 0.7rem; padding: 3px 8px; border-radius: 5px; color: white; font-weight: bold; }
+
         .feedback-content {
             background: white; padding: 35px; border-radius: 30px; border: 4px solid #333;
             max-width: 550px; width: 90%; box-shadow: 0 15px 40px rgba(0,0,0,0.2); text-align: center;
         }
         #fb-quote { background: #f0f0f0; padding: 15px; border-radius: 12px; font-size: 1.2rem; color: #333; margin-bottom: 20px; border-left: 8px solid #607d8b; display: block; line-height: 1.5; text-align: left; }
-        .feedback-ok-btn { padding: 12px 60px; font-size: 1.2rem; border-radius: 50px; background: #333; color: white; border: none; box-shadow: 0 4px 0 #000; }
-
-        #library-list { flex: 1; overflow-y: auto; background: #fff; border-radius: 10px; padding: 10px; border: 1px solid #eee; }
-        .lib-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; text-align: left; }
-        .tag { font-size: 0.7rem; padding: 3px 8px; border-radius: 5px; color: white; font-weight: bold; margin-left: 5px; }
+        .dialog-btn { padding: 12px 40px; font-size: 1.1rem; border-radius: 50px; border: none; font-weight: bold; }
+        .btn-dark { background: #333; color: white; box-shadow: 0 4px 0 #000; }
+        .btn-blue { background: #2196F3; color: white; box-shadow: 0 4px 0 #1976D2; }
+        .btn-gray { background: #9e9e9e; color: white; box-shadow: 0 4px 0 #616161; }
     </style>
 </head>
 <body onclick="unlockAudio()">
 
-<div id="nav-area">
-    <button class="nav-btn pushable-btn" onclick="openLibrary()">句子管理 📋</button>
-</div>
-
-<div id="reset-area">
-    <button class="reset-btn pushable-btn" onclick="resetGame()">重置遊戲 🔄</button>
-</div>
+<div id="nav-area"><button class="nav-btn pushable-btn" onclick="openLibrary()">句子管理 📋</button></div>
+<div id="reset-area"><button class="reset-btn pushable-btn" onclick="confirmReset()">重置遊戲 🔄</button></div>
 
 <div id="top-header-container">
     <div class="role-container" id="container-teacher" onclick="toggleRole('teacher')">
-        <img src="teacher.png" class="role-pic" alt="老師">
-        <div class="role-label">老師</div>
+        <img src="teacher.png" class="role-pic" alt="老師"><div class="role-label">老師</div>
     </div>
     <div class="header-center">
         <div id="header-title">字詞多面體</div>
@@ -145,8 +163,7 @@
         </div>
     </div>
     <div class="role-container" id="container-student" onclick="toggleRole('student')">
-        <img src="student.png" class="role-pic" alt="同學">
-        <div class="role-label">同學</div>
+        <img src="student.png" class="role-pic" alt="同學"><div class="role-label">同學</div>
     </div>
 </div>
 
@@ -163,28 +180,40 @@
         <span id="fb-quote"></span>
         <h1 id="fb-icon" style="font-size: 3.5rem; margin: 10px 0;"></h1>
         <h2 id="fb-msg" style="margin-bottom: 25px; font-size: 1.3rem; color: #333;"></h2>
-        <button class="feedback-ok-btn pushable-btn" onclick="closeFeedback()">OK</button>
+        <button class="dialog-btn btn-dark pushable-btn" onclick="closeFeedback()">OK</button>
+    </div>
+</div>
+
+<div id="confirm-overlay" class="overlay">
+    <div class="feedback-content" style="border-color: #2196F3;">
+        <h1 style="font-size: 3.5rem; margin: 10px 0;">🔄</h1>
+        <h2 style="margin-bottom: 10px; font-size: 1.5rem; color: #1976D2;">重置遊戲確認</h2>
+        <p>確定要重置所有題目狀態嗎？</p>
+        <div style="display:flex; gap:15px; justify-content:center; margin-top:20px;">
+            <button class="dialog-btn btn-gray pushable-btn" onclick="closeConfirm()">取消</button>
+            <button class="dialog-btn btn-blue pushable-btn" onclick="executeReset()">確定重置</button>
+        </div>
     </div>
 </div>
 
 <div id="library-overlay" class="overlay" style="background:white; z-index:600;">
-    <div id="library-content-wrapper" style="width: 100%; max-width: 950px; height: 80%; display: flex; flex-direction: column; gap: 15px;">
-        <h2 id="form-title">句子管理</h2>
-        <div id="add-sentence-form" style="background: #fff; padding: 15px; border-radius: 12px; border: 2px solid #607d8b; display: flex; flex-direction: column; gap: 10px;">
-            <div class="form-row"><input type="text" id="new-text" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ccc; box-sizing:border-box;" placeholder="輸入句子內容..."></div>
-            <div class="form-row" style="display:flex; gap:15px; align-items:center;">
-                <div class="checkbox-group" style="display:flex; gap:10px;">
-                    <label><input type="checkbox" id="check-pos"> 支援</label>
-                    <label><input type="checkbox" id="check-neu"> 程序</label>
-                    <label><input type="checkbox" id="check-neg"> 警告</label>
+    <div id="library-content-wrapper">
+        <h2 style="margin: 0;">句子管理</h2>
+        <div id="add-sentence-form" style="background: #fff; padding: 15px; border-radius: 12px; border: 2px solid #607d8b; display: flex; flex-direction: column; gap: 10px; width:100%; box-sizing:border-box;">
+            <input type="text" id="new-text" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ccc; box-sizing:border-box;" placeholder="輸入新句子內容...">
+            <div style="display:flex; gap:15px; align-items:center; flex-wrap: wrap;">
+                <div class="checkbox-group">
+                    <label style="cursor:pointer;"><input type="checkbox" id="check-pos"> 支援</label>
+                    <label style="cursor:pointer; margin-left:10px;"><input type="checkbox" id="check-neu"> 程序</label>
+                    <label style="cursor:pointer; margin-left:10px;"><input type="checkbox" id="check-neg"> 警告</label>
                 </div>
                 <button id="submit-btn" class="pushable-btn" style="padding:10px 20px; background:#ff5722; color:white; border:none; border-radius:8px; font-weight:bold;" onclick="handleFormSubmit()">加入庫存 +</button>
-                <button id="cancel-edit-btn" style="display:none; padding:10px 20px;" onclick="cancelEdit()">取消</button>
+                <button id="cancel-edit-btn" style="display:none; padding:10px 20px; background:#999; color:white; border:none; border-radius:8px;" onclick="cancelEdit()">取消修改</button>
             </div>
         </div>
         <div id="library-list"></div>
     </div>
-    <button onclick="closeLibrary()" class="feedback-ok-btn pushable-btn" style="margin-top: 15px; background: #607d8b; box-shadow:0 4px 0 #455a64;">返回 🏠</button>
+    <button onclick="closeLibrary()" class="dialog-btn btn-gray pushable-btn" style="margin-top: 15px; background: #607d8b; padding: 12px 60px;">返回 🏠</button>
 </div>
 
 <script>
@@ -202,173 +231,81 @@
     function playErrorSound() { playTone(150, 'sawtooth', 0.5, 0.1); }
 
     let allData = [
-        { id: 1, text: "這份練習你拿回去試試看，不一定要交。", pos: true, neu: true, neg: false, reason: "這是老師提供的額外支援，目的是給予你練習的彈性而非壓力。" },
-        { id: 2, text: "你的筆掉了，請撿起來。", pos: true, neu: true, neg: false, reason: "維持秩序也是一種支援，讓你能在整潔環境學習。" },
-        { id: 3, text: "如果你再這樣不聽指令，我就要通知訓導主任處理。", pos: true, neu: true, neg: true, reason: "明確的後果告知能支援你做出正確決策。" },
-        { id: 4, text: "我今天預備了多一份筆記給你參考。", pos: true, neu: true, neg: false, reason: "積極的個人化學習協助。" },
-        { id: 5, text: "這題如果你覺得難，可以先跳過。", pos: true, neu: true, neg: false, reason: "教你時間管理策略，降低焦慮。" },
-        { id: 6, text: "全班同學請打開書本第 20 頁。", pos: true, neu: true, neg: false, reason: "建立清晰的課室結構對所有人都是支援。" },
-        { id: 7, text: "如果這題你暫時想不通，我們先討論下一題。", pos: true, neu: true, neg: false, reason: "優化學習流程，保持大腦運作效能。" },
-        { id: 8, text: "我現在要準備下一堂課，有問題請在明天第一節小息找我。", pos: true, neu: true, neg: false, reason: "清晰的預期能支援你更好地安排時間。" },
-        { id: 9, text: "現在是全班分組討論時間，請先跟組員溝通。", pos: true, neu: true, neg: false, reason: "引導遵守當下教學系統規則。" },
-        { id: 10, text: "這題你可以先看參考答案，如果還是不明白，我們課後再談。", pos: true, neu: true, neg: false, reason: "提供自主學習工具並承諾後續支援。" },
-        { id: 11, text: "我看你好像有點氣憤，需要去洗個臉冷靜一下嗎？", pos: true, neu: true, neg: false, reason: "察覺情緒並主動提供緩衝空間。" },
-        { id: 12, text: "這不是針對你個人，這是全班都要遵守的課室守則。", pos: true, neu: true, neg: false, reason: "解釋公平運作邏輯，統一執行規則。" },
-        { id: 13, text: "你剛才的提問很有趣，但我需要先完成這部分的進度才能回應你。", pos: true, neu: true, neg: false, reason: "肯定問題價值，同時維持進度。" },
-        { id: 14, text: "我留意到你剛才的反應比較大，我們可以先停一停，呼吸一下。", pos: true, neu: true, neg: false, reason: "生理調節建議，幫助冷靜。" },
-        { id: 15, text: "你為什麼每次都犯同樣的錯誤？到底有沒有用心聽？", pos: false, neu: false, neg: true, reason: "帶有個人標籤與責備情緒。" },
-        { id: 16, text: "全班只有你還沒交功課，你這樣非常不負責任。", pos: false, neu: false, neg: true, reason: "使用了情緒化字眼評斷人格。" },
-        { id: 17, text: "你剛才的行為非常自私，完全沒有顧及其他同學。", pos: false, neu: false, neg: true, reason: "反映老師當下的負面情緒。" },
-        { id: 18, text: "你這種學習態度，到了 DSE 考試一定會失敗。", pos: false, neu: false, neg: true, reason: "壓力下的負面預言，並非事實。" },
-        { id: 19, text: "你不要再不停問同樣的問題了，我很煩。", pos: false, neu: false, neg: true, reason: "表達個人情緒飽和，非專業回應。" },
-        { id: 20, text: "我現在沒空理你，你自己去一邊反省一下。", pos: false, neu: false, neg: true, reason: "排除式溝通，無助於問題解決。" },
-        { id: 21, text: "這點小事你都處理不到嗎？為什麼一定要來麻煩我？", pos: false, neu: false, neg: true, reason: "帶有嘲諷性質，否定求助需要。" }
+        { id: 1, text: "這份練習你拿回去試試看，不一定要交。", pos: true, neu: true, neg: false, reason: "這是老師提供的額外支援。", practiced: false },
+        { id: 2, text: "你的筆掉了，請撿起來。", pos: true, neu: true, neg: false, reason: "維持秩序也是一種支援。", practiced: false },
+        { id: 3, text: "如果你再這樣不聽指令，我就要通知訓導主任處理。", pos: true, neu: true, neg: true, reason: "明確的後果告知。", practiced: false },
+        { id: 4, text: "我今天預備了多一份筆記給你參考。", pos: true, neu: true, neg: false, reason: "積極的個人化學習協助。", practiced: false },
+        { id: 5, text: "這題如果你覺得難，可以先跳過。", pos: true, neu: true, neg: false, reason: "教你時間管理策略。", practiced: false },
+        { id: 6, text: "全班同學請打開書本第 20 頁。", pos: true, neu: true, neg: false, reason: "建立清晰的課室結構。", practiced: false },
+        { id: 7, text: "如果這題你暫時想不通，我們先討論下一題。", pos: true, neu: true, neg: false, reason: "優化學習流程。", practiced: false },
+        { id: 8, text: "我現在要準備下一堂課，有問題請在明天第一節小息找我。", pos: true, neu: true, neg: false, reason: "清晰的預期。", practiced: false },
+        { id: 9, text: "現在是全班分組討論時間，請先跟組員溝通。", pos: true, neu: true, neg: false, reason: "引導遵守規則。", practiced: false },
+        { id: 10, text: "這題你可以先看參考答案，如果還是不明白，我們課後再談。", pos: true, neu: true, neg: false, reason: "提供自主學習工具。", practiced: false },
+        { id: 11, text: "我看你好像有點氣憤，需要去洗個臉冷靜一下嗎？", pos: true, neu: true, neg: false, reason: "主動提供緩衝空間。", practiced: false },
+        { id: 12, text: "這不是針對你個人，這是全班都要遵守的課室守則。", pos: true, neu: true, neg: false, reason: "解釋公平運作邏輯。", practiced: false },
+        { id: 13, text: "你剛才的提問很有趣，但我需要先完成這部分的進度才能回應你。", pos: true, neu: true, neg: false, reason: "肯定問題價值。", practiced: false },
+        { id: 14, text: "我留意到你剛才的反應比較大，我們可以先停一停，呼吸一下。", pos: true, neu: true, neg: false, reason: "生理調節建議。", practiced: false },
+        { id: 15, text: "你為什麼每次都犯同樣的錯誤？到底有沒有用心聽？", pos: false, neu: false, neg: true, reason: "帶有個人標籤。", practiced: false },
+        { id: 16, text: "全班只有你還沒交功課，你這樣非常不負責任。", pos: false, neu: false, neg: true, reason: "使用了情緒化字眼。", practiced: false },
+        { id: 17, text: "你剛才的行為非常自私，完全沒有顧及其他同學。", pos: false, neu: false, neg: true, reason: "反映負面情緒。", practiced: false },
+        { id: 18, text: "你這種學習態度，到了 DSE 考試一定會失敗。", pos: false, neu: false, neg: true, reason: "壓力下的負面預言。", practiced: false },
+        { id: 19, text: "你不要再不停問同樣的問題了，我很煩。", pos: false, neu: false, neg: true, reason: "表達個人情緒飽和。", practiced: false },
+        { id: 20, text: "我現在沒空理你，你自己去一邊反省一下。", pos: false, neu: false, neg: true, reason: "排除式溝通。", practiced: false },
+        { id: 21, text: "這點小事你都處理不到嗎？為什麼一定要來麻煩我？", pos: false, neu: false, neg: true, reason: "帶有嘲諷性質。", practiced: false }
     ];
 
-    let pool = [...allData];
-    let activeItem = null;
-    let lastCorrect = false;
-    let editingId = null;
+    let pool = [...allData.filter(i => !i.practiced)];
+    let activeItem = null; let lastCorrect = false; let editingId = null;
 
-    function resetGame() {
-        if (!confirm("確定要重置所有題目嗎？")) return;
-        pool = [...allData];
-        document.getElementById('floating-area').innerHTML = '';
-        activeItem = null;
-        document.querySelectorAll('.role-container').forEach(c => c.classList.remove('active'));
-        updateCounter();
-        alert("已重置！");
-    }
-
+    function confirmReset() { unlockAudio(); document.getElementById('confirm-overlay').style.display = 'flex'; }
+    function closeConfirm() { document.getElementById('confirm-overlay').style.display = 'none'; }
+    function executeReset() { allData.forEach(i => i.practiced = false); pool = [...allData]; document.getElementById('floating-area').innerHTML = ''; activeItem = null; updateCounter(); closeConfirm(); }
     function toggleRole(role) { unlockAudio(); document.getElementById(`container-${role}`).classList.toggle('active'); }
     function speakText(text) { unlockAudio(); window.speechSynthesis.cancel(); const msg = new SpeechSynthesisUtterance(text); msg.lang = 'zh-HK'; window.speechSynthesis.speak(msg); }
     function updateCounter() { document.getElementById('count-num').textContent = pool.length; }
 
     function drawNew() {
-        unlockAudio();
-        if (activeItem) pool.push(activeItem);
-        document.querySelectorAll('.role-container').forEach(c => c.classList.remove('active'));
-        if (pool.length === 0) { alert("題目已抽完！按重置或從清單選擇。"); return; }
+        unlockAudio(); if (activeItem && !activeItem.practiced) pool.push(activeItem);
+        if (pool.length === 0) { alert("題目已抽完！"); return; }
         const idx = Math.floor(Math.random() * pool.length);
         setMainSentence(pool.splice(idx, 1)[0]);
     }
 
     function setMainSentence(item) {
-        const area = document.getElementById('floating-area');
-        area.innerHTML = '';
-        activeItem = item;
-        const strip = document.createElement('div');
-        strip.className = 'sentence-strip';
-        strip.id = 'current-strip';
+        const area = document.getElementById('floating-area'); area.innerHTML = ''; activeItem = item;
+        const strip = document.createElement('div'); strip.className = 'sentence-strip'; strip.id = 'current-strip';
         strip.innerHTML = `<span>${activeItem.text}</span><button class="audio-btn pushable-btn" onclick="event.stopPropagation(); speakText('${activeItem.text}')">📢</button>`;
-        area.appendChild(strip);
-        makeDraggable(strip);
-        updateCounter();
+        area.appendChild(strip); makeDraggable(strip); updateCounter();
     }
 
-    // iOS 觸控判定核心修復
     function handleDropLogic(boxType) {
-        unlockAudio();
-        if (boxType === 'positive') lastCorrect = activeItem.pos;
+        unlockAudio(); if (boxType === 'positive') lastCorrect = activeItem.pos;
         else if (boxType === 'neutral') lastCorrect = activeItem.neu;
         else if (boxType === 'negative') lastCorrect = activeItem.neg;
-        
         document.getElementById('fb-quote').textContent = activeItem.text;
         document.getElementById('feedback-overlay').style.display = 'flex';
-        
-        if (lastCorrect) {
-            playSuccessSound(); 
-            document.getElementById('current-strip').style.display = 'none'; 
-            document.getElementById('fb-icon').textContent = "🌟";
-            document.getElementById('fb-msg').innerHTML = "<b>解碼正確</b>" + (activeItem.reason ? "<br><br>" + activeItem.reason : "");
-        } else {
-            playErrorSound(); 
-            document.getElementById('fb-icon').textContent = "❓";
-            document.getElementById('fb-msg').textContent = "這個分類好像不太準確，再換個角度想一想？";
-            const strip = document.getElementById('current-strip');
-            strip.style.transition = '0.3s'; strip.style.left = '50%'; strip.style.top = '50%';
-            strip.style.position = 'absolute'; strip.style.transform = 'translate(-50%, -50%)';
-        }
+        if (lastCorrect) { playSuccessSound(); document.getElementById('current-strip').style.display = 'none'; document.getElementById('fb-icon').textContent = "🌟"; document.getElementById('fb-msg').innerHTML = "<b>解碼正確</b><br><br>" + (activeItem.reason || ""); activeItem.practiced = true; }
+        else { playErrorSound(); document.getElementById('fb-icon').textContent = "❓"; document.getElementById('fb-msg').textContent = "分類不太準確，再想一想？"; const strip = document.getElementById('current-strip'); strip.style.transition = '0.3s'; strip.style.left = '50%'; strip.style.top = '50%'; strip.style.position = 'absolute'; strip.style.transform = 'translate(-50%, -50%)'; }
     }
 
     function makeDraggable(el) {
-        let isDragging = false;
-        let startX, startY;
-
-        const onStart = (e) => {
-            unlockAudio();
-            isDragging = true;
-            const cx = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-            const cy = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
-            const r = el.getBoundingClientRect();
-            startX = cx - r.left; startY = cy - r.top;
-            el.style.transition = 'none';
-        };
-
-        const onMove = (e) => {
-            if (!isDragging) return;
-            if (e.type.includes('touch')) e.preventDefault();
-            const cx = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-            const cy = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
-            el.style.position = 'fixed';
-            el.style.left = (cx - startX) + 'px'; el.style.top = (cy - startY) + 'px';
-            
-            // 實時高亮盒子
-            const targetBox = getBoxAtPoint(cx, cy);
-            document.querySelectorAll('.box').forEach(b => b.classList.remove('active-drop'));
-            if (targetBox) targetBox.classList.add('active-drop');
-        };
-
-        const onEnd = (e) => {
-            if (!isDragging) return;
-            isDragging = false;
-            const cx = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX;
-            const cy = e.type.includes('touch') ? e.changedTouches[0].clientY : e.clientY;
-            
-            const targetBox = getBoxAtPoint(cx, cy);
-            document.querySelectorAll('.box').forEach(b => b.classList.remove('active-drop'));
-
-            if (targetBox) {
-                handleDropLogic(targetBox.getAttribute('data-type'));
-            } else {
-                el.style.transition = '0.3s'; el.style.left = '50%'; el.style.top = '50%';
-                el.style.position = 'absolute'; el.style.transform = 'translate(-50%, -50%)';
-            }
-        };
-
+        let isDragging = false; let startX, startY;
+        const onStart = (e) => { unlockAudio(); isDragging = true; const cx = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; const cy = e.type.includes('touch') ? e.touches[0].clientY : e.clientY; const r = el.getBoundingClientRect(); startX = cx - r.left; startY = cy - r.top; el.style.transition = 'none'; };
+        const onMove = (e) => { if (!isDragging) return; if (e.type.includes('touch')) e.preventDefault(); const cx = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; const cy = e.type.includes('touch') ? e.touches[0].clientY : e.clientY; el.style.position = 'fixed'; el.style.left = (cx - startX) + 'px'; el.style.top = (cy - startY) + 'px'; const targetBox = getBoxAtPoint(cx, cy); document.querySelectorAll('.box').forEach(b => b.classList.remove('active-drop')); if (targetBox) targetBox.classList.add('active-drop'); };
+        const onEnd = (e) => { if (!isDragging) return; isDragging = false; const cx = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX; const cy = e.type.includes('touch') ? e.changedTouches[0].clientY : e.clientY; const targetBox = getBoxAtPoint(cx, cy); document.querySelectorAll('.box').forEach(b => b.classList.remove('active-drop')); if (targetBox) handleDropLogic(targetBox.getAttribute('data-type')); else { el.style.transition = '0.3s'; el.style.left = '50%'; el.style.top = '50%'; el.style.position = 'absolute'; el.style.transform = 'translate(-50%, -50%)'; } };
         el.addEventListener('mousedown', onStart); window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onEnd);
         el.addEventListener('touchstart', onStart, {passive: false}); window.addEventListener('touchmove', onMove, {passive: false}); window.addEventListener('touchend', onEnd);
     }
-
-    function getBoxAtPoint(x, y) {
-        const elements = document.elementsFromPoint(x, y);
-        return elements.find(el => el.classList.contains('box'));
-    }
+    function getBoxAtPoint(x, y) { const elements = document.elementsFromPoint(x, y); return elements.find(el => el.classList.contains('box')); }
 
     function handleFormSubmit() {
-        const text = document.getElementById('new-text').value.trim();
-        const isPos = document.getElementById('check-pos').checked;
-        const isNeu = document.getElementById('check-neu').checked;
-        const isNeg = document.getElementById('check-neg').checked;
+        const text = document.getElementById('new-text').value.trim(); const isPos = document.getElementById('check-pos').checked; const isNeu = document.getElementById('check-neu').checked; const isNeg = document.getElementById('check-neg').checked;
         if (!text) return;
-        if (editingId !== null) {
-            const idx = allData.findIndex(i => i.id === editingId);
-            allData[idx] = { ...allData[idx], text, pos: isPos, neu: isNeu, neg: isNeg };
-            editingId = null;
-        } else {
-            const newItem = { id: Date.now(), text, pos: isPos, neu: isNeu, neg: isNeg, reason: "" };
-            allData.unshift(newItem); pool.push(newItem);
-        }
+        if (editingId !== null) { const idx = allData.findIndex(i => i.id === editingId); allData[idx] = { ...allData[idx], text, pos: isPos, neu: isNeu, neg: isNeg }; editingId = null; }
+        else { const newItem = { id: Date.now(), text, pos: isPos, neu: isNeu, neg: isNeg, reason: "", practiced: false }; allData.unshift(newItem); pool.push(newItem); }
         resetForm(); refreshLibraryList(); updateCounter();
     }
-
-    function resetForm() {
-        document.getElementById('new-text').value = '';
-        document.getElementById('check-pos').checked = false;
-        document.getElementById('check-neu').checked = false;
-        document.getElementById('check-neg').checked = false;
-        document.getElementById('submit-btn').innerText = "加入庫存 +";
-    }
+    function resetForm() { document.getElementById('new-text').value = ''; document.getElementById('check-pos').checked = false; document.getElementById('check-neu').checked = false; document.getElementById('check-neg').checked = false; document.getElementById('submit-btn').innerText = "加入庫存 +"; }
 
     function refreshLibraryList() {
         const list = document.getElementById('library-list');
@@ -377,37 +314,20 @@
             if (s.pos) tagsHtml += `<span class="tag" style="background:#2e7d32">支援</span>`;
             if (s.neu) tagsHtml += `<span class="tag" style="background:#1565c0">程序</span>`;
             if (s.neg) tagsHtml += `<span class="tag" style="background:#c62828">警告</span>`;
-            return `<div class="lib-item">
-                <div style="flex:1;"><b>${s.text}</b><div>${tagsHtml}</div></div>
+            const practicedClass = s.practiced ? 'practiced' : '';
+            const practicedBtnText = s.practiced ? '已練習 ✔️' : '練習 🎯';
+            return `<div class="lib-item ${practicedClass}">
+                <div style="flex:1;"><b>${s.text}</b><div class="tag-container">${tagsHtml}</div></div>
                 <div style="display:flex; gap:5px;">
-                    <button onclick="startEdit(${s.id})" style="background:#fb8c00; color:white; border:none; padding:8px 12px; border-radius:4px;">修改</button>
-                    <button onclick="selectFromLibrary(${s.id})" style="background:#3f51b5; color:white; border:none; padding:8px 12px; border-radius:4px;">練習</button>
-                </div>
-            </div>`;
+                    <button onclick="startEdit(${s.id})" style="background:#fb8c00; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">修改</button>
+                    <button onclick="selectFromLibrary(${s.id})" style="background:#3f51b5; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">${practicedBtnText}</button>
+                </div></div>`;
         }).join('');
     }
 
-    function startEdit(id) {
-        const item = allData.find(i => i.id === id); editingId = id;
-        document.getElementById('new-text').value = item.text;
-        document.getElementById('check-pos').checked = item.pos;
-        document.getElementById('check-neu').checked = item.neu;
-        document.getElementById('check-neg').checked = item.neg;
-        document.getElementById('submit-btn').innerText = "儲存修改";
-        document.getElementById('cancel-edit-btn').style.display = "block";
-    }
-
+    function startEdit(id) { const item = allData.find(i => i.id === id); editingId = id; document.getElementById('new-text').value = item.text; document.getElementById('check-pos').checked = item.pos; document.getElementById('check-neu').checked = item.neu; document.getElementById('check-neg').checked = item.neg; document.getElementById('submit-btn').innerText = "儲存修改"; document.getElementById('cancel-edit-btn').style.display = "block"; }
     function cancelEdit() { resetForm(); editingId = null; document.getElementById('cancel-edit-btn').style.display = "none"; }
-    
-    function selectFromLibrary(id) { 
-        if (activeItem) pool.push(activeItem); 
-        const selIdx = pool.findIndex(p => p.id === id);
-        // 如果題目不在 pool 中（說明已被抽走），則直接從 allData 找
-        const sel = selIdx > -1 ? pool.splice(selIdx, 1)[0] : allData.find(p => p.id === id);
-        setMainSentence(sel); 
-        closeLibrary(); 
-    }
-
+    function selectFromLibrary(id) { if (activeItem && !activeItem.practiced) pool.push(activeItem); const selIdx = pool.findIndex(p => p.id === id); const sel = selIdx > -1 ? pool.splice(selIdx, 1)[0] : allData.find(p => p.id === id); setMainSentence(sel); closeLibrary(); }
     function closeFeedback() { document.getElementById('feedback-overlay').style.display = 'none'; if (lastCorrect) { document.getElementById('floating-area').innerHTML = ''; activeItem = null; updateCounter(); } }
     function openLibrary() { refreshLibraryList(); document.getElementById('library-overlay').style.display = 'flex'; }
     function closeLibrary() { document.getElementById('library-overlay').style.display = 'none'; }
