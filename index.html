@@ -279,4 +279,51 @@
         let isDragging = false; let startX, startY;
         const onStart = (e) => { unlockAudio(); isDragging = true; const cx = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; const cy = e.type.includes('touch') ? e.touches[0].clientY : e.clientY; const r = el.getBoundingClientRect(); startX = cx - r.left; startY = cy - r.top; el.style.transition = 'none'; };
         const onMove = (e) => { if (!isDragging) return; if (e.type.includes('touch')) e.preventDefault(); const cx = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; const cy = e.type.includes('touch') ? e.touches[0].clientY : e.clientY; el.style.position = 'fixed'; el.style.left = (cx - startX) + 'px'; el.style.top = (cy - startY) + 'px'; checkCollision(cx, cy); };
-        const onEnd = (e) => { if (!isDragging) return; isDragging = false; const cx = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX; const cy = e.type.includes('touch') ? e.changedTouches[0].clientY : e.clientY; const box = getDroppedBox(cx, cy); if (box) handleDropLogic(box); else { el.style.transition = '0.3s'; el.style.left = '
+        const onEnd = (e) => { if (!isDragging) return; isDragging = false; const cx = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX; const cy = e.type.includes('touch') ? e.changedTouches[0].clientY : e.clientY; const box = getDroppedBox(cx, cy); if (box) handleDropLogic(box); else { el.style.transition = '0.3s'; el.style.left = '50%'; el.style.top = '50%'; el.style.position = 'absolute'; el.style.transform = 'translate(-50%, -50%)'; } document.querySelectorAll('.box').forEach(b => b.classList.remove('active-drop')); };
+        el.addEventListener('mousedown', onStart); window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onEnd);
+        el.addEventListener('touchstart', onStart, {passive: false}); window.addEventListener('touchmove', onMove, {passive: false}); window.addEventListener('touchend', onEnd);
+    }
+
+    function checkCollision(x, y) { document.querySelectorAll('.box').forEach(b => { const r = b.getBoundingClientRect(); if (x > r.left && x < r.right && y > r.top && y < r.bottom) b.classList.add('active-drop'); else b.classList.remove('active-drop'); }); }
+    function getDroppedBox(x, y) { let res = null; document.querySelectorAll('.box').forEach(b => { const r = b.getBoundingClientRect(); if (x > r.left && x < r.right && y > r.top && y < r.bottom) res = b.getAttribute('data-type'); }); return res; }
+
+    function handleFormSubmit() {
+        const text = document.getElementById('new-text').value.trim(); const isPos = document.getElementById('check-pos').checked; const isNeu = document.getElementById('check-neu').checked; const isNeg = document.getElementById('check-neg').checked;
+        if (!text) return;
+        if (editingId !== null) { const idx = allData.findIndex(i => i.id === editingId); allData[idx] = { ...allData[idx], text, pos: isPos, neu: isNeu, neg: isNeg }; editingId = null; }
+        else { allData.unshift({ id: Date.now(), text, pos: isPos, neu: isNeu, neg: isNeg, reason: "" }); }
+        resetForm(); refreshLibraryList(); updateCounter();
+    }
+
+    function resetForm() { document.getElementById('new-text').value = ''; document.getElementById('check-pos').checked = false; document.getElementById('check-neu').checked = false; document.getElementById('check-neg').checked = false; document.getElementById('submit-btn').innerText = "加入庫存 +"; }
+
+    function refreshLibraryList() {
+        const list = document.getElementById('library-list');
+        list.innerHTML = allData.map(s => {
+            let tagsHtml = '';
+            if (s.pos) tagsHtml += `<span class="tag" style="background:#2e7d32">支援</span>`;
+            if (s.neu) tagsHtml += `<span class="tag" style="background:#1565c0">程序</span>`;
+            if (s.neg) tagsHtml += `<span class="tag" style="background:#c62828">警告</span>`;
+            return `<div class="lib-item"><div class="lib-text-group"><div><b>${s.text}</b></div><div class="tag-container">${tagsHtml}</div></div><div class="lib-action-group"><button onclick="startEdit(${s.id})" style="background:#fb8c00; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">修改</button><button onclick="selectFromLibrary(${s.id})" style="background:#3f51b5; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">練習</button></div></div>`;
+        }).join('');
+    }
+
+    function startEdit(id) {
+        const item = allData.find(i => i.id === id); editingId = id;
+        document.getElementById('new-text').value = item.text;
+        document.getElementById('check-pos').checked = item.pos;
+        document.getElementById('check-neu').checked = item.neu;
+        document.getElementById('check-neg').checked = item.neg;
+        document.getElementById('submit-btn').innerText = "儲存修改";
+        document.getElementById('cancel-edit-btn').style.display = "block";
+    }
+
+    function cancelEdit() { resetForm(); editingId = null; document.getElementById('cancel-edit-btn').style.display = "none"; }
+    function selectFromLibrary(id) { if (activeItem) pool.push(activeItem); const sel = allData.find(p => p.id === id); pool = pool.filter(p => p.id !== id); setMainSentence(sel); closeLibrary(); }
+    function closeFeedback() { document.getElementById('feedback-overlay').style.display = 'none'; if (lastCorrect) { document.getElementById('floating-area').innerHTML = ''; activeItem = null; updateCounter(); } }
+    function openLibrary() { refreshLibraryList(); document.getElementById('library-overlay').style.display = 'flex'; }
+    function closeLibrary() { document.getElementById('library-overlay').style.display = 'none'; }
+    updateCounter();
+</script>
+</body>
+</html>
