@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>字詞多面體 - 滾動修復版</title>
+    <title>字詞多面體 - 數量同步修復版</title>
     <style>
         html, body {
             overflow: hidden;
@@ -59,7 +59,6 @@
             opacity: 0.3; transition: all 0.3s ease;
         }
         .role-container.active { opacity: 1; transform: scale(1.05); }
-        .role-container:active { transform: translateY(3px) scale(0.98); }
         .role-pic { width: 180px; height: auto; max-height: 180px; object-fit: contain; -webkit-user-drag: none; }
         .role-label { margin-top: -5px; font-weight: bold; color: #37474f; font-size: 1.1rem; }
 
@@ -94,43 +93,18 @@
         #box-negative { background-color: #ffcdd2; color: #c62828; }
         .box.active-drop { transform: scale(1.05); border: 5px solid #333; }
 
-        /* Overlay */
         .overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(255,255,255,0.95); z-index: 500; flex-direction: column;
             justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; backdrop-filter: blur(5px);
         }
 
-        /* 句子管理面板修復滾動 */
-        #library-content-wrapper { 
-            width: 100%; 
-            max-width: 950px; 
-            height: 85%; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 15px; 
-            overflow: hidden; /* 防止外層滾動 */
-        }
-
-        #library-list { 
-            flex: 1; 
-            overflow-y: auto; /* 核心修復：允許垂直滾動 */
-            -webkit-overflow-scrolling: touch; /* iOS 順滑滾動 */
-            background: #fff; 
-            border-radius: 10px; 
-            padding: 10px; 
-            border: 1px solid #eee; 
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        /* Mac 捲軸美化 */
+        #library-content-wrapper { width: 100%; max-width: 950px; height: 85%; display: flex; flex-direction: column; gap: 15px; overflow: hidden; }
+        #library-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; background: #fff; border-radius: 10px; padding: 10px; border: 1px solid #eee; width: 100%; box-sizing: border-box; }
         #library-list::-webkit-scrollbar { width: 8px; }
-        #library-list::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
         #library-list::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
-        #library-list::-webkit-scrollbar-thumb:hover { background: #555; }
 
-        .lib-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; text-align: left; }
+        .lib-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; text-align: left; transition: 0.3s; }
         .lib-item.practiced { background-color: #f2f2f2; opacity: 0.5; }
         .tag-container { display: flex; gap: 5px; margin-top: 5px; }
         .tag { font-size: 0.7rem; padding: 3px 8px; border-radius: 5px; color: white; font-weight: bold; }
@@ -262,7 +236,13 @@
     function executeReset() { allData.forEach(i => i.practiced = false); pool = [...allData]; document.getElementById('floating-area').innerHTML = ''; activeItem = null; updateCounter(); closeConfirm(); }
     function toggleRole(role) { unlockAudio(); document.getElementById(`container-${role}`).classList.toggle('active'); }
     function speakText(text) { unlockAudio(); window.speechSynthesis.cancel(); const msg = new SpeechSynthesisUtterance(text); msg.lang = 'zh-HK'; window.speechSynthesis.speak(msg); }
-    function updateCounter() { document.getElementById('count-num').textContent = pool.length; }
+    
+    // 修正：剩餘題目 = 池子裡的數量 + 當前正在畫面上的一題
+    function updateCounter() { 
+        let count = pool.length;
+        if (activeItem && !activeItem.practiced) count += 1;
+        document.getElementById('count-num').textContent = count; 
+    }
 
     function drawNew() {
         unlockAudio(); if (activeItem && !activeItem.practiced) pool.push(activeItem);
@@ -284,7 +264,14 @@
         else if (boxType === 'negative') lastCorrect = activeItem.neg;
         document.getElementById('fb-quote').textContent = activeItem.text;
         document.getElementById('feedback-overlay').style.display = 'flex';
-        if (lastCorrect) { playSuccessSound(); document.getElementById('current-strip').style.display = 'none'; document.getElementById('fb-icon').textContent = "🌟"; document.getElementById('fb-msg').innerHTML = "<b>解碼正確</b><br><br>" + (activeItem.reason || ""); activeItem.practiced = true; }
+        if (lastCorrect) { 
+            playSuccessSound(); 
+            document.getElementById('current-strip').style.display = 'none'; 
+            document.getElementById('fb-icon').textContent = "🌟"; 
+            document.getElementById('fb-msg').innerHTML = "<b>解碼正確</b><br><br>" + (activeItem.reason || ""); 
+            activeItem.practiced = true; 
+            updateCounter();
+        }
         else { playErrorSound(); document.getElementById('fb-icon').textContent = "❓"; document.getElementById('fb-msg').textContent = "分類不太準確，再想一想？"; const strip = document.getElementById('current-strip'); strip.style.transition = '0.3s'; strip.style.left = '50%'; strip.style.top = '50%'; strip.style.position = 'absolute'; strip.style.transform = 'translate(-50%, -50%)'; }
     }
 
@@ -301,9 +288,17 @@
     function handleFormSubmit() {
         const text = document.getElementById('new-text').value.trim(); const isPos = document.getElementById('check-pos').checked; const isNeu = document.getElementById('check-neu').checked; const isNeg = document.getElementById('check-neg').checked;
         if (!text) return;
-        if (editingId !== null) { const idx = allData.findIndex(i => i.id === editingId); allData[idx] = { ...allData[idx], text, pos: isPos, neu: isNeu, neg: isNeg }; editingId = null; }
-        else { const newItem = { id: Date.now(), text, pos: isPos, neu: isNeu, neg: isNeg, reason: "", practiced: false }; allData.unshift(newItem); pool.push(newItem); }
-        resetForm(); refreshLibraryList(); updateCounter();
+        if (editingId !== null) { 
+            const idx = allData.findIndex(i => i.id === editingId); 
+            allData[idx] = { ...allData[idx], text, pos: isPos, neu: isNeu, neg: isNeg }; 
+            editingId = null; 
+        }
+        else { 
+            const newItem = { id: Date.now(), text, pos: isPos, neu: isNeu, neg: isNeg, reason: "", practiced: false }; 
+            allData.unshift(newItem); 
+            pool.push(newItem); // 新增即時入池
+        }
+        resetForm(); refreshLibraryList(); updateCounter(); // 確保調用 updateCounter 同步主介面
     }
     function resetForm() { document.getElementById('new-text').value = ''; document.getElementById('check-pos').checked = false; document.getElementById('check-neu').checked = false; document.getElementById('check-neg').checked = false; document.getElementById('submit-btn').innerText = "加入庫存 +"; }
 
@@ -319,15 +314,15 @@
             return `<div class="lib-item ${practicedClass}">
                 <div style="flex:1;"><b>${s.text}</b><div class="tag-container">${tagsHtml}</div></div>
                 <div style="display:flex; gap:5px;">
-                    <button onclick="startEdit(${s.id})" style="background:#fb8c00; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">修改</button>
-                    <button onclick="selectFromLibrary(${s.id})" style="background:#3f51b5; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">${practicedBtnText}</button>
+                    <button onclick="startEdit(${s.id})" style="background:#fb8c00; color:white; border:none; padding:8px 12px; border-radius:4px;">修改</button>
+                    <button onclick="selectFromLibrary(${s.id})" style="background:#3f51b5; color:white; border:none; padding:8px 12px; border-radius:4px;">${practicedBtnText}</button>
                 </div></div>`;
         }).join('');
     }
 
     function startEdit(id) { const item = allData.find(i => i.id === id); editingId = id; document.getElementById('new-text').value = item.text; document.getElementById('check-pos').checked = item.pos; document.getElementById('check-neu').checked = item.neu; document.getElementById('check-neg').checked = item.neg; document.getElementById('submit-btn').innerText = "儲存修改"; document.getElementById('cancel-edit-btn').style.display = "block"; }
     function cancelEdit() { resetForm(); editingId = null; document.getElementById('cancel-edit-btn').style.display = "none"; }
-    function selectFromLibrary(id) { if (activeItem && !activeItem.practiced) pool.push(activeItem); const selIdx = pool.findIndex(p => p.id === id); const sel = selIdx > -1 ? pool.splice(selIdx, 1)[0] : allData.find(p => p.id === id); setMainSentence(sel); closeLibrary(); }
+    function selectFromLibrary(id) { if (activeItem && !activeItem.practiced) pool.push(activeItem); const selIdx = pool.findIndex(p => p.id === id); const sel = selIdx > -1 ? pool.splice(selIdx, 1)[0] : allData.find(p => p.id === id); setMainSentence(sel); closeLibrary(); updateCounter(); }
     function closeFeedback() { document.getElementById('feedback-overlay').style.display = 'none'; if (lastCorrect) { document.getElementById('floating-area').innerHTML = ''; activeItem = null; updateCounter(); } }
     function openLibrary() { refreshLibraryList(); document.getElementById('library-overlay').style.display = 'flex'; }
     function closeLibrary() { document.getElementById('library-overlay').style.display = 'none'; }
