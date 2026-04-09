@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>字詞多面體 - iPad 優化穩定版</title>
+    <title>字詞多面體 - 終極穩定版</title>
     <style>
         html, body {
             overflow: hidden;
@@ -27,11 +27,20 @@
             box-shadow: 0 1px 0 rgba(0,0,0,0.2) !important;
         }
 
-        #nav-area { position: absolute; top: 20px; left: 20px; z-index: 10; }
+        /* 導航區域佈局 */
+        #nav-area { position: absolute; top: 20px; left: 20px; z-index: 10; display: flex; gap: 10px; }
         .nav-btn {
             padding: 10px 18px; background: #607d8b; color: white; border: none;
             border-radius: 8px; font-size: 0.9rem;
             box-shadow: 0 4px 0 #455a64;
+        }
+
+        /* 右上角重置按鈕 */
+        #reset-area { position: absolute; top: 20px; right: 20px; z-index: 10; }
+        .reset-btn {
+            padding: 10px 18px; background: #2196F3; color: white; border: none;
+            border-radius: 8px; font-size: 0.9rem;
+            box-shadow: 0 4px 0 #1976D2;
         }
 
         #top-header-container {
@@ -59,45 +68,21 @@
             opacity: 0.3; transition: all 0.3s ease;
         }
         .role-container.active { opacity: 1; transform: scale(1.05); }
-        .role-container:active { transform: translateY(3px) scale(0.98); }
         .role-pic { width: 180px; height: auto; max-height: 180px; object-fit: contain; -webkit-user-drag: none; }
         .role-label { margin-top: -5px; font-weight: bold; color: #37474f; font-size: 1.1rem; }
 
         #main-stage { height: 28%; width: 100%; display: flex; justify-content: center; align-items: center; margin-top: -10px; }
         #floating-area { width: 100%; height: 100%; position: relative; display: flex; justify-content: center; align-items: center; }
         
-        /* 修正：iPad 移動穩定樣式 */
         .sentence-strip {
-            padding: 20px 30px; 
-            background: #ffffff; 
-            border: 3px solid #333; 
-            border-radius: 15px;
-            font-size: 1.3rem; 
-            font-weight: bold; 
-            display: flex; 
-            align-items: center;
-            justify-content: space-between; /* 確保文字同喇叭位置固定 */
-            gap: 15px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            position: absolute; 
-            touch-action: none; 
-            z-index: 100;
-            user-select: none; 
-            cursor: grab;
-            /* 固定闊度，防止變形 */
-            width: 70%;
-            max-width: 600px;
-            min-width: 320px;
-            box-sizing: border-box;
-            /* 效能優化 */
-            will-change: transform;
-            backface-visibility: hidden;
-        }
-        
-        .sentence-strip span {
-            flex: 1;
-            text-align: left;
-            word-break: break-all; /* 防止長句子撐開框框 */
+            padding: 20px 30px; background: #ffffff; border: 3px solid #333; border-radius: 15px;
+            font-size: 1.3rem; font-weight: bold; display: flex; align-items: center;
+            justify-content: space-between;
+            gap: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            position: absolute; touch-action: none; z-index: 100;
+            user-select: none; cursor: grab; 
+            width: 70%; max-width: 600px; min-width: 320px;
+            box-sizing: border-box; will-change: transform;
         }
 
         .audio-btn {
@@ -111,7 +96,7 @@
             width: 30%; height: 180px; border-radius: 20px; display: flex; flex-direction: column;
             align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold;
             border: 5px dashed rgba(0,0,0,0.1); text-align: center; padding: 15px; transition: 0.3s;
-            line-height: 1.4;
+            line-height: 1.4; pointer-events: auto;
         }
         .box small { display: block; font-size: 0.9rem; font-weight: normal; margin-top: 10px; opacity: 0.8; }
         #box-positive { background-color: #c8e6c9; color: #2e7d32; }
@@ -119,6 +104,7 @@
         #box-negative { background-color: #ffcdd2; color: #c62828; }
         .box.active-drop { transform: scale(1.05); border: 5px solid #333; }
 
+        /* Overlay */
         .overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(255,255,255,0.9); z-index: 500; flex-direction: column;
@@ -138,7 +124,13 @@
 </head>
 <body onclick="unlockAudio()">
 
-<div id="nav-area"><button class="nav-btn pushable-btn" onclick="openLibrary()">句子管理 📋</button></div>
+<div id="nav-area">
+    <button class="nav-btn pushable-btn" onclick="openLibrary()">句子管理 📋</button>
+</div>
+
+<div id="reset-area">
+    <button class="reset-btn pushable-btn" onclick="resetGame()">重置遊戲 🔄</button>
+</div>
 
 <div id="top-header-container">
     <div class="role-container" id="container-teacher" onclick="toggleRole('teacher')">
@@ -179,7 +171,7 @@
     <div id="library-content-wrapper" style="width: 100%; max-width: 950px; height: 80%; display: flex; flex-direction: column; gap: 15px;">
         <h2 id="form-title">句子管理</h2>
         <div id="add-sentence-form" style="background: #fff; padding: 15px; border-radius: 12px; border: 2px solid #607d8b; display: flex; flex-direction: column; gap: 10px;">
-            <div class="form-row"><input type="text" id="new-text" style="flex:1; padding:10px; border-radius:5px; border:1px solid #ccc;" placeholder="輸入句子內容..."></div>
+            <div class="form-row"><input type="text" id="new-text" style="width:100%; padding:10px; border-radius:5px; border:1px solid #ccc; box-sizing:border-box;" placeholder="輸入句子內容..."></div>
             <div class="form-row" style="display:flex; gap:15px; align-items:center;">
                 <div class="checkbox-group" style="display:flex; gap:10px;">
                     <label><input type="checkbox" id="check-pos"> 支援</label>
@@ -192,17 +184,13 @@
         </div>
         <div id="library-list"></div>
     </div>
-    <button onclick="closeLibrary()" class="feedback-ok-btn pushable-btn" style="margin-top: 15px; background: #607d8b;">返回 🏠</button>
+    <button onclick="closeLibrary()" class="feedback-ok-btn pushable-btn" style="margin-top: 15px; background: #607d8b; box-shadow:0 4px 0 #455a64;">返回 🏠</button>
 </div>
 
 <script>
-    let audioCtx = null;
-    function unlockAudio() {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-    }
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function unlockAudio() { if (audioCtx.state === 'suspended') audioCtx.resume(); }
     function playTone(freq, type, duration, vol) {
-        if (!audioCtx) unlockAudio();
         const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
         osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
         gain.gain.setValueAtTime(vol, audioCtx.currentTime);
@@ -226,7 +214,7 @@
         { id: 10, text: "這題你可以先看參考答案，如果還是不明白，我們課後再談。", pos: true, neu: true, neg: false, reason: "提供自主學習工具並承諾後續支援。" },
         { id: 11, text: "我看你好像有點氣憤，需要去洗個臉冷靜一下嗎？", pos: true, neu: true, neg: false, reason: "察覺情緒並主動提供緩衝空間。" },
         { id: 12, text: "這不是針對你個人，這是全班都要遵守的課室守則。", pos: true, neu: true, neg: false, reason: "解釋公平運作邏輯，統一執行規則。" },
-        { id: 13, text: "你剛才學的提問很有趣，但我需要先完成這部分的進度才能回應你。", pos: true, neu: true, neg: false, reason: "肯定問題價值，同時維持進度。" },
+        { id: 13, text: "你剛才的提問很有趣，但我需要先完成這部分的進度才能回應你。", pos: true, neu: true, neg: false, reason: "肯定問題價值，同時維持進度。" },
         { id: 14, text: "我留意到你剛才的反應比較大，我們可以先停一停，呼吸一下。", pos: true, neu: true, neg: false, reason: "生理調節建議，幫助冷靜。" },
         { id: 15, text: "你為什麼每次都犯同樣的錯誤？到底有沒有用心聽？", pos: false, neu: false, neg: true, reason: "帶有個人標籤與責備情緒。" },
         { id: 16, text: "全班只有你還沒交功課，你這樣非常不負責任。", pos: false, neu: false, neg: true, reason: "使用了情緒化字眼評斷人格。" },
@@ -237,7 +225,20 @@
         { id: 21, text: "這點小事你都處理不到嗎？為什麼一定要來麻煩我？", pos: false, neu: false, neg: true, reason: "帶有嘲諷性質，否定求助需要。" }
     ];
 
-    let pool = [...allData]; let activeItem = null; let lastCorrect = false; let editingId = null;
+    let pool = [...allData];
+    let activeItem = null;
+    let lastCorrect = false;
+    let editingId = null;
+
+    function resetGame() {
+        if (!confirm("確定要重置所有題目嗎？")) return;
+        pool = [...allData];
+        document.getElementById('floating-area').innerHTML = '';
+        activeItem = null;
+        document.querySelectorAll('.role-container').forEach(c => c.classList.remove('active'));
+        updateCounter();
+        alert("已重置！");
+    }
 
     function toggleRole(role) { unlockAudio(); document.getElementById(`container-${role}`).classList.toggle('active'); }
     function speakText(text) { unlockAudio(); window.speechSynthesis.cancel(); const msg = new SpeechSynthesisUtterance(text); msg.lang = 'zh-HK'; window.speechSynthesis.speak(msg); }
@@ -247,18 +248,25 @@
         unlockAudio();
         if (activeItem) pool.push(activeItem);
         document.querySelectorAll('.role-container').forEach(c => c.classList.remove('active'));
-        if (pool.length === 0) return;
+        if (pool.length === 0) { alert("題目已抽完！按重置或從清單選擇。"); return; }
         const idx = Math.floor(Math.random() * pool.length);
         setMainSentence(pool.splice(idx, 1)[0]);
     }
 
     function setMainSentence(item) {
-        const area = document.getElementById('floating-area'); area.innerHTML = ''; activeItem = item;
-        const strip = document.createElement('div'); strip.className = 'sentence-strip'; strip.id = 'current-strip';
+        const area = document.getElementById('floating-area');
+        area.innerHTML = '';
+        activeItem = item;
+        const strip = document.createElement('div');
+        strip.className = 'sentence-strip';
+        strip.id = 'current-strip';
         strip.innerHTML = `<span>${activeItem.text}</span><button class="audio-btn pushable-btn" onclick="event.stopPropagation(); speakText('${activeItem.text}')">📢</button>`;
-        area.appendChild(strip); makeDraggable(strip); updateCounter();
+        area.appendChild(strip);
+        makeDraggable(strip);
+        updateCounter();
     }
 
+    // iOS 觸控判定核心修復
     function handleDropLogic(boxType) {
         unlockAudio();
         if (boxType === 'positive') lastCorrect = activeItem.pos;
@@ -284,26 +292,83 @@
     }
 
     function makeDraggable(el) {
-        let isDragging = false; let startX, startY;
-        const onStart = (e) => { unlockAudio(); isDragging = true; const cx = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; const cy = e.type.includes('touch') ? e.touches[0].clientY : e.clientY; const r = el.getBoundingClientRect(); startX = cx - r.left; startY = cy - r.top; el.style.transition = 'none'; };
-        const onMove = (e) => { if (!isDragging) return; if (e.type.includes('touch')) e.preventDefault(); const cx = e.type.includes('touch') ? e.touches[0].clientX : e.clientX; const cy = e.type.includes('touch') ? e.touches[0].clientY : e.clientY; el.style.position = 'fixed'; el.style.left = (cx - startX) + 'px'; el.style.top = (cy - startY) + 'px'; checkCollision(cx, cy); };
-        const onEnd = (e) => { if (!isDragging) return; isDragging = false; const cx = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX; const cy = e.type.includes('touch') ? e.touches[0].clientY : e.clientY; const box = getDroppedBox(cx, cy); if (box) handleDropLogic(box); else { el.style.transition = '0.3s'; el.style.left = '50%'; el.style.top = '50%'; el.style.position = 'absolute'; el.style.transform = 'translate(-50%, -50%)'; } document.querySelectorAll('.box').forEach(b => b.classList.remove('active-drop')); };
+        let isDragging = false;
+        let startX, startY;
+
+        const onStart = (e) => {
+            unlockAudio();
+            isDragging = true;
+            const cx = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            const cy = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+            const r = el.getBoundingClientRect();
+            startX = cx - r.left; startY = cy - r.top;
+            el.style.transition = 'none';
+        };
+
+        const onMove = (e) => {
+            if (!isDragging) return;
+            if (e.type.includes('touch')) e.preventDefault();
+            const cx = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            const cy = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+            el.style.position = 'fixed';
+            el.style.left = (cx - startX) + 'px'; el.style.top = (cy - startY) + 'px';
+            
+            // 實時高亮盒子
+            const targetBox = getBoxAtPoint(cx, cy);
+            document.querySelectorAll('.box').forEach(b => b.classList.remove('active-drop'));
+            if (targetBox) targetBox.classList.add('active-drop');
+        };
+
+        const onEnd = (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            const cx = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX;
+            const cy = e.type.includes('touch') ? e.changedTouches[0].clientY : e.clientY;
+            
+            const targetBox = getBoxAtPoint(cx, cy);
+            document.querySelectorAll('.box').forEach(b => b.classList.remove('active-drop'));
+
+            if (targetBox) {
+                handleDropLogic(targetBox.getAttribute('data-type'));
+            } else {
+                el.style.transition = '0.3s'; el.style.left = '50%'; el.style.top = '50%';
+                el.style.position = 'absolute'; el.style.transform = 'translate(-50%, -50%)';
+            }
+        };
+
         el.addEventListener('mousedown', onStart); window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onEnd);
         el.addEventListener('touchstart', onStart, {passive: false}); window.addEventListener('touchmove', onMove, {passive: false}); window.addEventListener('touchend', onEnd);
     }
 
-    function checkCollision(x, y) { document.querySelectorAll('.box').forEach(b => { const r = b.getBoundingClientRect(); if (x > r.left && x < r.right && y > r.top && y < r.bottom) b.classList.add('active-drop'); else b.classList.remove('active-drop'); }); }
-    function getDroppedBox(x, y) { let res = null; document.querySelectorAll('.box').forEach(b => { const r = b.getBoundingClientRect(); if (x > r.left && x < r.right && y > r.top && y < r.bottom) res = b.getAttribute('data-type'); }); return res; }
+    function getBoxAtPoint(x, y) {
+        const elements = document.elementsFromPoint(x, y);
+        return elements.find(el => el.classList.contains('box'));
+    }
 
     function handleFormSubmit() {
-        const text = document.getElementById('new-text').value.trim(); const isPos = document.getElementById('check-pos').checked; const isNeu = document.getElementById('check-neu').checked; const isNeg = document.getElementById('check-neg').checked;
+        const text = document.getElementById('new-text').value.trim();
+        const isPos = document.getElementById('check-pos').checked;
+        const isNeu = document.getElementById('check-neu').checked;
+        const isNeg = document.getElementById('check-neg').checked;
         if (!text) return;
-        if (editingId !== null) { const idx = allData.findIndex(i => i.id === editingId); allData[idx] = { ...allData[idx], text, pos: isPos, neu: isNeu, neg: isNeg }; editingId = null; }
-        else { allData.unshift({ id: Date.now(), text, pos: isPos, neu: isNeu, neg: isNeg, reason: "" }); }
+        if (editingId !== null) {
+            const idx = allData.findIndex(i => i.id === editingId);
+            allData[idx] = { ...allData[idx], text, pos: isPos, neu: isNeu, neg: isNeg };
+            editingId = null;
+        } else {
+            const newItem = { id: Date.now(), text, pos: isPos, neu: isNeu, neg: isNeg, reason: "" };
+            allData.unshift(newItem); pool.push(newItem);
+        }
         resetForm(); refreshLibraryList(); updateCounter();
     }
 
-    function resetForm() { document.getElementById('new-text').value = ''; document.getElementById('check-pos').checked = false; document.getElementById('check-neu').checked = false; document.getElementById('check-neg').checked = false; document.getElementById('submit-btn').innerText = "加入庫存 +"; }
+    function resetForm() {
+        document.getElementById('new-text').value = '';
+        document.getElementById('check-pos').checked = false;
+        document.getElementById('check-neu').checked = false;
+        document.getElementById('check-neg').checked = false;
+        document.getElementById('submit-btn').innerText = "加入庫存 +";
+    }
 
     function refreshLibraryList() {
         const list = document.getElementById('library-list');
@@ -312,7 +377,13 @@
             if (s.pos) tagsHtml += `<span class="tag" style="background:#2e7d32">支援</span>`;
             if (s.neu) tagsHtml += `<span class="tag" style="background:#1565c0">程序</span>`;
             if (s.neg) tagsHtml += `<span class="tag" style="background:#c62828">警告</span>`;
-            return `<div class="lib-item"><div class="lib-text-group"><div><b>${s.text}</b></div><div class="tag-container">${tagsHtml}</div></div><div class="lib-action-group"><button onclick="startEdit(${s.id})" style="background:#fb8c00; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">修改</button><button onclick="selectFromLibrary(${s.id})" style="background:#3f51b5; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">練習</button></div></div>`;
+            return `<div class="lib-item">
+                <div style="flex:1;"><b>${s.text}</b><div>${tagsHtml}</div></div>
+                <div style="display:flex; gap:5px;">
+                    <button onclick="startEdit(${s.id})" style="background:#fb8c00; color:white; border:none; padding:8px 12px; border-radius:4px;">修改</button>
+                    <button onclick="selectFromLibrary(${s.id})" style="background:#3f51b5; color:white; border:none; padding:8px 12px; border-radius:4px;">練習</button>
+                </div>
+            </div>`;
         }).join('');
     }
 
@@ -327,7 +398,16 @@
     }
 
     function cancelEdit() { resetForm(); editingId = null; document.getElementById('cancel-edit-btn').style.display = "none"; }
-    function selectFromLibrary(id) { if (activeItem) pool.push(activeItem); const sel = allData.find(p => p.id === id); pool = pool.filter(p => p.id !== id); setMainSentence(sel); closeLibrary(); }
+    
+    function selectFromLibrary(id) { 
+        if (activeItem) pool.push(activeItem); 
+        const selIdx = pool.findIndex(p => p.id === id);
+        // 如果題目不在 pool 中（說明已被抽走），則直接從 allData 找
+        const sel = selIdx > -1 ? pool.splice(selIdx, 1)[0] : allData.find(p => p.id === id);
+        setMainSentence(sel); 
+        closeLibrary(); 
+    }
+
     function closeFeedback() { document.getElementById('feedback-overlay').style.display = 'none'; if (lastCorrect) { document.getElementById('floating-area').innerHTML = ''; activeItem = null; updateCounter(); } }
     function openLibrary() { refreshLibraryList(); document.getElementById('library-overlay').style.display = 'flex'; }
     function closeLibrary() { document.getElementById('library-overlay').style.display = 'none'; }
