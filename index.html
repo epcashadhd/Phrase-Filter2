@@ -85,15 +85,16 @@
             display: block; line-height: 1.5; text-align: left;
         }
 
-        #library-content { width: 100%; max-width: 800px; height: 75%; overflow-y: auto; padding: 15px; background: #fff; border-radius: 10px; }
-        .lib-item { padding: 12px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; text-align: left; }
-        .lib-text-group { flex: 1; margin-right: 15px; }
-        .lib-action-group { display: flex; align-items: center; gap: 8px; }
+        #library-content { width: 100%; max-width: 950px; height: 75%; overflow-y: auto; padding: 15px; background: #fff; border-radius: 10px; }
+        .lib-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; text-align: left; }
+        .lib-text-group { flex: 1; margin-right: 20px; font-size: 1.05rem; }
+        .lib-action-group { display: flex; align-items: center; gap: 10px; }
+        .tag-container { display: flex; gap: 5px; }
         .select-btn {
-            padding: 6px 12px; background: #3f51b5; color: white; border: none;
-            border-radius: 6px; cursor: pointer; font-size: 0.85rem;
+            padding: 8px 14px; background: #3f51b5; color: white; border: none;
+            border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: bold;
         }
-        .tag { font-size: 0.75rem; padding: 3px 8px; border-radius: 5px; color: white; flex-shrink: 0; }
+        .tag { font-size: 0.7rem; padding: 4px 10px; border-radius: 5px; color: white; flex-shrink: 0; font-weight: bold; letter-spacing: 0.5px; }
     </style>
 </head>
 <body>
@@ -131,54 +132,44 @@
 
 <script>
     const allData = [
-        { id: 1, text: "「這份練習你拿回去試試看，不一定要交。」", type: "positive", reason: "這是老師提供的額外支援，目的是給予你練習的彈性而非壓力。" },
-        { id: 2, text: "「你的筆掉了，請撿起來。」", type: "neutral", reason: "這是中性的環境事實陳述，老師在維持課室整潔，無關個人表現。" },
-        { id: 3, text: "「我今天預備了多一份筆記給你參考。」", type: "positive", reason: "老師觀察到你的需要，這是積極的個人化學習協助。" },
-        { id: 4, text: "「這題如果你覺得難，可以先跳過。」", type: "positive", reason: "這是在教你時間管理策略，目的是降低你的焦慮感。" },
-        { id: 5, text: "「全班同學請打開書本第 20 頁。」", type: "neutral", reason: "這是集體行政指令。在系統運作中，這不帶有任何對你的個人評價。" },
-        { id: 6, text: "「如果這題你暫時想不通，我們先討論下一題。」", type: "positive", reason: "這是在優化你的學習流程，幫助你保持大腦的運作效能。" },
-        { id: 7, text: "「我現在要準備下一堂課，有問題請在明天第一節小息找我。」", type: "neutral", reason: "這是專業界線的提醒，老師正在執行他的工作排程。" },
-        { id: 8, text: "「現在是全班分組討論時間，請先跟組員溝通。」", type: "neutral", reason: "老師在引導你遵守當下的教學系統規則，練習社交互動。" },
-        { id: 10, text: "「我看你好像有點氣憤，需要去洗個臉冷靜一下嗎？」", type: "positive", reason: "老師觀察到你的情緒信號，並主動提供空間讓你重置情緒。" },
-        { id: 11, text: "「這不是針對你個人，這是全班都要遵守的課室守則。」", type: "neutral", reason: "老師在解釋系統的公平運作邏輯，提醒你規則是統一執行的。" },
-        { id: 12, text: "「你剛才的提問很有趣，但我需要先完成這部分的進度才能回應你。」", type: "neutral", reason: "老師肯定了你的提問價值，但他必須優先處理全班的教學進度。" },
-        { id: 13, text: "「我留意到你剛才的反應比較大，我們可以先停一停，呼吸一下。」", type: "positive", reason: "這是一項生理調節建議，目的是幫助你冷靜下來。" },
-        { id: 14, text: "「如果你再這樣不聽指令，我就要通知訓導主任處理。」", type: "both", reason: "這同時包含負面情緒與程序警告。放入「警告」或「程序/中性」盒子都代表你讀懂了訊號。" },
-        { id: 15, text: "「你為什麼每次都犯同樣的錯誤？到底有沒有用心聽？」", type: "negative", reason: "這句帶有個人標籤與過度概括，這是不專業的表達方式。" },
-        { id: 16, text: "「全班只有你還沒交功課，你這樣非常不負責任。」", type: "negative", reason: "老師使用了情緒化字眼。面對這種訊息，應將重點放在「補交功課」的事實上。" },
-        { id: 17, text: "「你剛才的行為非常自私，完全沒有顧及其他同學。」", type: "negative", reason: "這句帶有人格批評，反映了老師當下受到你的行為干擾而產生情緒。" },
-        { id: 18, text: "「你這種學習態度，到了 DSE 考試一定會失敗。」", type: "negative", reason: "這是壓力下的負面預言。只需將其視為老師對目前進度的極度焦慮。" },
-        { id: 19, text: "「你不要再不停問同樣的問題了，我很煩。」", type: "negative", reason: "老師表達了個人情緒飽和。這代表目前不是溝通的好時機。" },
-        { id: 20, text: "「我現在沒空理你，你自己去一邊反省一下。」", type: "negative", reason: "這種回應雖然令人不適，但這時暫時遠離衝突現場對你更有利。" },
-        { id: 21, text: "「這點小事你都處理不到嗎？為什麼一定要來麻煩我？」", type: "negative", reason: "這句帶有嘲諷性質，反映的是老師當下的耐性不足，而非你的能力問題。" }
+        { id: 1, text: "「這份練習你拿回去試試看，不一定要交。」", type: "pos_neu", reason: "這是老師提供的額外支援，目的是給予你練習的彈性而非壓力。" },
+        { id: 2, text: "「你的筆掉了，請撿起來。」", type: "pos_neu", reason: "這是中性的環境事實陳述。維持秩序也是一種支援，讓你能在整潔環境學習。" },
+        { id: 3, text: "「我今天預備了多一份筆記給你參考。」", type: "pos_neu", reason: "老師觀察到你的需要，這是積極的個人化學習協助。" },
+        { id: 4, text: "「這題如果你覺得難，可以先跳過。」", type: "pos_neu", reason: "這是在教你時間管理策略，目的是降低你的焦慮感。" },
+        { id: 5, text: "「全班同學請打開書本第 20 頁。」", type: "pos_neu", reason: "這是集體指令。建立清晰的課堂結構對所有人來說都是一種支援。" },
+        { id: 6, text: "「如果這題你暫時想不通，我們先討論下一題。」", type: "pos_neu", reason: "這是在優化你的學習流程，幫助你保持大腦的運作效能。" },
+        { id: 7, text: "「我現在要準備下一堂課，有問題請在明天第一節小息找我。」", type: "pos_neu", reason: "這是專業界線的提醒。清晰的預期（Expectation）能支援你更好地安排時間。" },
+        { id: 8, text: "「現在是全班分組討論時間，請先跟組員溝通。」", type: "pos_neu", reason: "老師在引導你遵守系統規則。學習社交規則也是支援你未來融入社會。" },
+        { id: 9, text: "「這題你可以先看參考答案，如果還是不明白，我們課後再談。」", type: "pos_neu", reason: "老師提供了自主學習的工具，並承諾後續提供個人支援。" },
+        { id: 10, text: "「我看你好像有點氣憤，需要去洗個臉冷靜一下嗎？」", type: "pos_neu", reason: "老師觀察到你的情緒信號，並主動提供空間讓你重置情緒。" },
+        { id: 11, text: "「這不是針對你個人，這是全班都要遵守的課室守則。」", type: "pos_neu", reason: "老師在解釋公平運作邏輯。公平的環境是學習最大的支援。" },
+        { id: 12, text: "「你剛才的提問很有趣，但我需要先完成這部分的進度才能回應你。」", type: "pos_neu", reason: "老師肯定了問題價值。維持進度是支援全班的學習進度不落後。" },
+        { id: 13, text: "「我留意到你剛才的反應比較大，我們可以先停一停，呼吸一下。」", type: "pos_neu", reason: "這是一項生理調節建議，目的是幫助你冷靜下來。" },
+        { id: 14, text: "「如果你再這樣不聽指令，我就要通知訓導主任處理。」", type: "neg_pos_neu", reason: "這包含負面情緒與程序警告。雖然語氣重，但明確的後果告知能支援你做出正確決策。" },
+        { id: 15, text: "「你為什麼每次都犯同樣的錯誤？到底有沒有用心聽？」", type: "neg", reason: "這句帶有個人標籤與過度概括，這是不專業的表達方式。" },
+        { id: 16, text: "「全班只有你還沒交功課，你這樣非常不負責任。」", type: "neg", reason: "老師使用了情緒化字眼。面對這種訊息，應將重點放在「補交功課」的事實上。" },
+        { id: 17, text: "「你剛才的行為非常自私，完全沒有顧及其他同學。」", type: "neg", reason: "這句帶有人格批評，反映了老師當下受到你的行為干擾而產生情緒。" },
+        { id: 18, text: "「你這種學習態度，到了 DSE 考試一定會失敗。」", type: "neg", reason: "這是壓力下的負面預言。只需將其視為老師對目前進度的極度焦慮。" },
+        { id: 19, text: "「你不要再不停問同樣的問題了，我很煩。」", type: "neg", reason: "老師表達了個人情緒飽和。這代表目前不是溝通的好時機。" },
+        { id: 20, text: "「我現在沒空理你，你自己去一邊反省一下。」", type: "neg", reason: "這種回應雖然令人不適，但這時暫時遠離衝突現場對你更有利。" },
+        { id: 21, text: "「這點小事你都處理不到嗎？為什麼一定要來麻煩我？」", type: "neg", reason: "這句帶有嘲諷性質，反映的是老師當下的耐性不足，而非你的能力問題。" }
     ];
 
     let pool = [...allData];
     let activeItem = null;
     let lastCorrect = false;
 
-    // --- 強制普通話核心引擎 ---
     function speakText(text) {
         window.speechSynthesis.cancel();
         const msg = new SpeechSynthesisUtterance(text.replace(/「|」/g, ""));
-        
-        // 獲取所有可用語音
         const voices = window.speechSynthesis.getVoices();
-        
-        // 強大篩選器：
-        // 1. 優先找 Tingting (Mac 普通話)
-        // 2. 找 zh-CN
-        // 3. 找 Mandarin
         const mandarinVoice = voices.find(v => v.name.includes('Tingting')) ||
                              voices.find(v => v.lang === 'zh-CN') ||
                              voices.find(v => v.name.includes('Mandarin')) ||
                              voices.find(v => v.lang.includes('zh'));
-
-        if (mandarinVoice) {
-            msg.voice = mandarinVoice;
-        }
+        if (mandarinVoice) msg.voice = mandarinVoice;
         msg.lang = 'zh-CN';
-        msg.rate = 0.9; // 稍微慢一點，更清晰
+        msg.rate = 0.9;
         window.speechSynthesis.speak(msg);
     }
 
@@ -272,13 +263,12 @@
     }
 
     function handleDropLogic(boxType) {
-        // 特別修正：both 接受 警告(negative) 或 程序(neutral)
-        if (activeItem.type === 'both') {
-            lastCorrect = (boxType === 'negative' || boxType === 'neutral');
-        } else if (activeItem.type === 'negative') {
-            lastCorrect = (boxType === 'negative');
-        } else {
+        if (activeItem.type === 'pos_neu') {
             lastCorrect = (boxType === 'positive' || boxType === 'neutral');
+        } else if (activeItem.type === 'neg_pos_neu') {
+            lastCorrect = (boxType === 'negative' || boxType === 'positive' || boxType === 'neutral');
+        } else if (activeItem.type === 'neg') {
+            lastCorrect = (boxType === 'negative');
         }
 
         const strip = document.getElementById('current-strip');
@@ -307,26 +297,36 @@
 
     function openLibrary() {
         const list = document.getElementById('library-content');
-        list.innerHTML = allData.map(s => `
-            <div class="lib-item">
-                <div class="lib-text-group"><span>${s.text}</span></div>
-                <div class="lib-action-group">
-                    <span class="tag" style="background:${s.type==='both'?'#9c27b0':(s.type==='positive'?'#2e7d32':s.type==='neutral'?'#1565c0':'#c62828')}">
-                        ${s.type==='both'?'警告 & 程序/中性':(s.type==='positive'?'支援':s.type==='neutral'?'程序/中性':'警告')}
-                    </span>
-                    <button class="select-btn" onclick="selectFromLibrary(${s.id})">練習此句 🎯</button>
+        list.innerHTML = allData.map(s => {
+            let tagsHtml = '';
+            
+            if (s.type === 'pos_neu') {
+                // 根據你的新指令：程序句皆屬於正向支援類別，因此合併標示
+                tagsHtml += `<span class="tag" style="background:#2e7d32">支援</span>`;
+                tagsHtml += `<span class="tag" style="background:#1565c0">程序/中性</span>`;
+            } else if (s.type === 'neg_pos_neu') {
+                tagsHtml += `<span class="tag" style="background:#c62828">警告</span>`;
+                tagsHtml += `<span class="tag" style="background:#2e7d32">支援</span>`;
+                tagsHtml += `<span class="tag" style="background:#1565c0">程序/中性</span>`;
+            } else if (s.type === 'neg') {
+                tagsHtml += `<span class="tag" style="background:#c62828">警告</span>`;
+            }
+
+            return `
+                <div class="lib-item">
+                    <div class="lib-text-group"><span>${s.text}</span></div>
+                    <div class="lib-action-group">
+                        <div class="tag-container">${tagsHtml}</div>
+                        <button class="select-btn" onclick="selectFromLibrary(${s.id})">練習 🎯</button>
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
         document.getElementById('library-overlay').style.display = 'flex';
     }
     function closeLibrary() { document.getElementById('library-overlay').style.display = 'none'; }
     
-    // 預加載語音列表，解決 Mac 異步讀取問題
-    window.speechSynthesis.onvoiceschanged = () => {
-        window.speechSynthesis.getVoices();
-    };
-    
+    window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
     updateCounter();
 </script>
 </body>
