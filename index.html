@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>字詞多面體</title>
+    <title>字詞多面體 - 互動增強版</title>
     <style>
         html, body {
             overflow: hidden;
@@ -17,33 +17,108 @@
 
         body { display: flex; flex-direction: column; align-items: center; height: 100vh; }
 
+        /* 全局按鈕彈起效果樣式 */
+        .pushable-btn {
+            transition: all 0.1s ease;
+            cursor: pointer;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+        }
+        .pushable-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.2) !important;
+        }
+
+        /* 導航按鈕 */
         #nav-area { position: absolute; top: 20px; left: 20px; z-index: 10; }
         .nav-btn {
             padding: 10px 18px; background: #607d8b; color: white; border: none;
-            border-radius: 8px; font-size: 0.9rem; cursor: pointer;
-            box-shadow: 0 4px 0 #455a64; transition: 0.2s;
+            border-radius: 8px; font-size: 0.9rem;
+            box-shadow: 0 4px 0 #455a64;
         }
-        .nav-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #455a64; }
+        .nav-btn:active { box-shadow: 0 1px 0 #455a64 !important; }
 
-        #header-title { margin-top: 25px; color: #37474f; font-size: 1.6rem; font-weight: bold; letter-spacing: 2px; }
+        /* 頂部標題與角色區域佈局 */
+        #top-header-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 5px; /* 稍微向上靠 */
+            gap: 20px;
+            position: relative;
+        }
 
-        #draw-area { height: 15%; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 10px; }
+        .header-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 5;
+        }
+
+        #header-title { color: #37474f; font-size: 1.6rem; font-weight: bold; letter-spacing: 2px; margin: 0; }
+        
+        #draw-area { display: flex; flex-direction: column; align-items: center; margin-top: 5px; }
         #counter-tag { background: #ff5722; color: white; padding: 4px 15px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; margin-bottom: 8px; }
         
         #draw-box {
-            width: 90px; height: 70px; background: #ffa726; border: 4px solid #fb8c00;
+            width: 80px; height: 60px; background: #ffa726; border: 4px solid #fb8c00;
             border-radius: 12px; display: flex; justify-content: center;
-            align-items: center; font-size: 2.2rem; box-shadow: 0 6px 0 #e65100;
-            cursor: pointer; transition: 0.2s;
+            align-items: center; font-size: 2rem;
+            box-shadow: 0 6px 0 #e65100;
         }
-        #draw-box:hover { transform: scale(1.05); }
-        #draw-box:active { transform: scale(0.95) translateY(4px); box-shadow: 0 2px 0 #e65100; }
+        #draw-box:active { box-shadow: 0 2px 0 #e65100 !important; }
 
-        #floating-area { height: 35%; width: 100%; position: relative; display: flex; justify-content: center; align-items: center; }
+        /* 角色容器（大幅放大） */
+        .role-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            user-select: none;
+            opacity: 0.3; /* 預設半透明 */
+            transition: opacity 0.3s ease, transform 0.1s ease;
+        }
+        .role-container.active { opacity: 1; }
+        /* 圖片按鈕撳落去嘅彈起效果 */
+        .role-container:active { transform: translateY(3px) scale(0.98); }
+
+        .role-pic {
+            width: 180px; /* 大幅放大圖片尺寸 */
+            height: auto;
+            max-height: 180px;
+            object-fit: contain;
+            -webkit-user-drag: none;
+        }
+
+        .role-label {
+            margin-top: -5px; /* 稍微縮短文字同圖片距離 */
+            font-weight: bold;
+            color: #37474f;
+            font-size: 1.1rem;
+        }
+
+        /* 句子顯示區域 */
+        #main-stage {
+            height: 30%; /* 縮小高度以適應放大嘅圖片 */
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            margin-top: -10px;
+        }
+
+        #floating-area { 
+            width: 100%; 
+            height: 100%; 
+            position: relative; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+        }
         
         .sentence-strip {
             padding: 20px 30px; background: #ffffff; border: 3px solid #333; border-radius: 15px;
-            font-size: 1.2rem; font-weight: bold; display: flex; align-items: center;
+            font-size: 1.3rem; font-weight: bold; display: flex; align-items: center;
             gap: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
             position: absolute; touch-action: none; z-index: 100;
             user-select: none; cursor: grab; max-width: 80%;
@@ -52,12 +127,15 @@
         .audio-btn {
             background: #4caf50; color: white; border: none; border-radius: 50%;
             min-width: 45px; height: 45px; font-size: 1.1rem;
-            display: flex; justify-content: center; align-items: center; cursor: pointer;
+            display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 4px 0 #2e7d32;
         }
+        .audio-btn:active { box-shadow: 0 1px 0 #2e7d32 !important; }
 
-        #boxes-container { height: 45%; width: 100%; display: flex; justify-content: space-around; align-items: flex-start; padding: 20px; box-sizing: border-box; }
+        /* 判定盒子 */
+        #boxes-container { height: 40%; width: 100%; display: flex; justify-content: space-around; align-items: flex-start; padding: 10px 20px; box-sizing: border-box; }
         .box {
-            width: 31%; height: 180px; border-radius: 25px; display: flex; flex-direction: column;
+            width: 30%; height: 160px; border-radius: 20px; display: flex; flex-direction: column;
             align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold;
             border: 5px dashed rgba(0,0,0,0.1); text-align: center; padding: 10px;
             transition: 0.3s;
@@ -65,54 +143,87 @@
         #box-positive { background-color: #c8e6c9; color: #2e7d32; }
         #box-neutral { background-color: #bbdefb; color: #1565c0; }
         #box-negative { background-color: #ffcdd2; color: #c62828; }
-        .box.active-drop { transform: scale(1.15); border: 5px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .box.active-drop { transform: scale(1.05); border: 5px solid #333; }
 
+        /* Overlay & Feedback */
         .overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(255,255,255,0.9); z-index: 500; flex-direction: column;
             justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;
             backdrop-filter: blur(5px);
         }
-        
         .feedback-content {
             background: white; padding: 35px; border-radius: 30px; border: 4px solid #333;
-            max-width: 550px; width: 90%; box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            max-width: 550px; width: 90%; box-shadow: 0 15px 40px rgba(0,0,0,0.2); text-align: center;
         }
-
         #fb-quote {
             background: #f0f0f0; padding: 15px; border-radius: 12px; font-size: 1.2rem;
             color: #333; margin-bottom: 20px; border-left: 8px solid #607d8b;
             display: block; line-height: 1.5; text-align: left;
         }
-
-        #library-content { width: 100%; max-width: 950px; height: 75%; overflow-y: auto; padding: 15px; background: #fff; border-radius: 10px; }
-        .lib-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; text-align: left; }
-        .lib-text-group { flex: 1; margin-right: 20px; font-size: 1.05rem; }
-        .lib-action-group { display: flex; align-items: center; gap: 10px; }
-        .tag-container { display: flex; gap: 5px; }
-        .select-btn {
-            padding: 8px 14px; background: #3f51b5; color: white; border: none;
-            border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: bold;
+        .feedback-ok-btn {
+            padding: 12px 60px; font-size: 1.2rem; border-radius: 50px; background: #333; color: white; border: none;
+            box-shadow: 0 4px 0 #000;
         }
-        .tag { font-size: 0.7rem; padding: 4px 10px; border-radius: 5px; color: white; flex-shrink: 0; font-weight: bold; letter-spacing: 0.5px; }
+        .feedback-ok-btn:active { box-shadow: 0 1px 0 #000 !important; }
+
+        /* 管理表單 */
+        #library-content-wrapper { width: 100%; max-width: 950px; height: 80%; display: flex; flex-direction: column; gap: 15px; }
+        #add-sentence-form { background: #fff; padding: 15px; border-radius: 12px; border: 2px solid #607d8b; display: flex; flex-direction: column; gap: 10px; }
+        .form-row { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        #new-text { flex: 1; padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-size: 1rem; }
+        .checkbox-group { display: flex; gap: 12px; align-items: center; font-size: 0.95rem; font-weight: bold; }
+        
+        .btn-group { display: flex; gap: 10px; }
+        .add-btn { padding: 10px 25px; background: #ff5722; color: white; border: none; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 0 #bf360c; }
+        .add-btn:active { box-shadow: 0 1px 0 #bf360c !important; }
+        .cancel-edit-btn { padding: 10px 20px; background: #9e9e9e; color: white; border: none; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 0 #616161; }
+        .cancel-edit-btn:active { box-shadow: 0 1px 0 #616161 !important; }
+
+        #library-list { flex: 1; overflow-y: auto; background: #fff; border-radius: 10px; padding: 10px; border: 1px solid #eee; }
+        .lib-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .tag { font-size: 0.7rem; padding: 4px 8px; border-radius: 5px; color: white; font-weight: bold; margin-left: 5px;}
+        .lib-action-group { display: flex; align-items: center; gap: 8px; }
+        
+        /* 表單內小按鈕嘅彈起效果 */
+        .lib-item-btn {
+            border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold;
+        }
+        .lib-item-btn:active { transform: translateY(1px); box-shadow: 0 1px 0 rgba(0,0,0,0.2) !important; }
     </style>
 </head>
 <body>
 
-<div id="nav-area"><button class="nav-btn" onclick="openLibrary()">查看句子庫 📋</button></div>
-<div id="header-title">字詞多面體</div>
+<div id="nav-area"><button class="nav-btn pushable-btn" onclick="openLibrary()">句子管理 📋</button></div>
 
-<div id="draw-area">
-    <div id="counter-tag">剩餘題目：<span id="count-num">0</span></div>
-    <div id="draw-box" onclick="drawNew()">📦</div>
+<div id="top-header-container">
+    <div class="role-container" id="container-teacher" onclick="toggleRole('teacher')">
+        <img src="teacher.png" class="role-pic" alt="老師">
+        <div class="role-label">老師</div>
+    </div>
+
+    <div class="header-center">
+        <div id="header-title">字詞多面體</div>
+        <div id="draw-area">
+            <div id="counter-tag">剩餘題目：<span id="count-num">0</span></div>
+            <div id="draw-box" class="pushable-btn" onclick="drawNew()">📦</div>
+        </div>
+    </div>
+
+    <div class="role-container" id="container-student" onclick="toggleRole('student')">
+        <img src="student.png" class="role-pic" alt="同學">
+        <div class="role-label">同學</div>
+    </div>
 </div>
 
-<div id="floating-area"></div>
+<div id="main-stage">
+    <div id="floating-area"></div>
+</div>
 
 <div id="boxes-container">
-    <div id="box-positive" class="box" data-type="positive">正向 / 支援 👍<br><small>老師在協助我</small></div>
-    <div id="box-neutral" class="box" data-type="neutral">程序 / 中性 🔵<br><small>日常教學流程</small></div>
-    <div id="box-negative" class="box" data-type="negative">警告 / 負面 ⚠️<br><small>情緒或後果預告</small></div>
+    <div id="box-positive" class="box" data-type="positive">正向 / 支援 👍</div>
+    <div id="box-neutral" class="box" data-type="neutral">程序 / 中性 🔵</div>
+    <div id="box-negative" class="box" data-type="negative">警告 / 負面 ⚠️</div>
 </div>
 
 <div id="feedback-overlay" class="overlay">
@@ -120,56 +231,77 @@
         <span id="fb-quote"></span>
         <h1 id="fb-icon" style="font-size: 3.5rem; margin: 10px 0;"></h1>
         <h2 id="fb-msg" style="margin-bottom: 25px; font-size: 1.3rem; color: #333;"></h2>
-        <button onclick="closeFeedback()" style="padding: 12px 60px; font-size: 1.2rem; border-radius: 50px; background: #333; color: white; border: none; cursor: pointer;">OK</button>
+        <button class="feedback-ok-btn pushable-btn" onclick="closeFeedback()">OK</button>
     </div>
 </div>
 
 <div id="library-overlay" class="overlay" style="background:white; z-index:600;">
-    <h1>字詞多面體 - 句子總覽 📋</h1>
-    <div id="library-content"></div>
-    <button onclick="closeLibrary()" style="margin-top: 20px; padding: 12px 50px; border-radius: 50px; background: #607d8b; color: white; border: none; cursor: pointer;">返回 🏠</button>
+    <div id="library-content-wrapper">
+        <h2 id="form-title">句子管理</h2>
+        <div id="add-sentence-form">
+            <div class="form-row"><input type="text" id="new-text" placeholder="輸入句子內容..."></div>
+            <div class="form-row">
+                <div class="checkbox-group">
+                    <label><input type="checkbox" id="check-pos"> 正向/支援</label>
+                    <label><input type="checkbox" id="check-neu"> 程序/中性</label>
+                    <label><input type="checkbox" id="check-neg"> 警告/負面</label>
+                </div>
+                <div class="btn-group">
+                    <button id="submit-btn" class="add-btn pushable-btn" onclick="handleFormSubmit()">加入庫存 +</button>
+                    <button id="cancel-edit-btn" class="cancel-edit-btn pushable-btn" style="display:none;" onclick="cancelEdit()">取消</button>
+                </div>
+            </div>
+        </div>
+        <div id="library-list"></div>
+    </div>
+    <button onclick="closeLibrary()" class="feedback-ok-btn pushable-btn" style="margin-top: 15px; background: #607d8b; box-shadow: 0 4px 0 #455a64;">返回 🏠</button>
 </div>
 
 <script>
-    const allData = [
-        { id: 1, text: "「這份練習你拿回去試試看，不一定要交。」", type: "pos_neu", reason: "這是老師提供的額外支援，目的是給予你練習的彈性而非壓力。" },
-        { id: 2, text: "「你的筆掉了，請撿起來。」", type: "pos_neu", reason: "這是中性的環境事實陳述。維持秩序也是一種支援，讓你能在整潔環境學習。" },
-        { id: 3, text: "「我今天預備了多一份筆記給你參考。」", type: "pos_neu", reason: "老師觀察到你的需要，這是積極的個人化學習協助。" },
-        { id: 4, text: "「這題如果你覺得難，可以先跳過。」", type: "pos_neu", reason: "這是在教你時間管理策略，目的是降低你的焦慮感。" },
-        { id: 5, text: "「全班同學請打開書本第 20 頁。」", type: "pos_neu", reason: "這是集體指令。建立清晰的課堂結構對所有人來說都是一種支援。" },
-        { id: 6, text: "「如果這題你暫時想不通，我們先討論下一題。」", type: "pos_neu", reason: "這是在優化你的學習流程，幫助你保持大腦的運作效能。" },
-        { id: 7, text: "「我現在要準備下一堂課，有問題請在明天第一節小息找我。」", type: "pos_neu", reason: "這是專業界線的提醒。清晰的預期（Expectation）能支援你更好地安排時間。" },
-        { id: 8, text: "「現在是全班分組討論時間，請先跟組員溝通。」", type: "pos_neu", reason: "老師在引導你遵守系統規則。學習社交規則也是支援你未來融入社會。" },
-        { id: 9, text: "「這題你可以先看參考答案，如果還是不明白，我們課後再談。」", type: "pos_neu", reason: "老師提供了自主學習的工具，並承諾後續提供個人支援。" },
-        { id: 10, text: "「我看你好像有點氣憤，需要去洗個臉冷靜一下嗎？」", type: "pos_neu", reason: "老師觀察到你的情緒信號，並主動提供空間讓你重置情緒。" },
-        { id: 11, text: "「這不是針對你個人，這是全班都要遵守的課室守則。」", type: "pos_neu", reason: "老師在解釋公平運作邏輯。公平的環境是學習最大的支援。" },
-        { id: 12, text: "「你剛才的提問很有趣，但我需要先完成這部分的進度才能回應你。」", type: "pos_neu", reason: "老師肯定了問題價值。維持進度是支援全班的學習進度不落後。" },
-        { id: 13, text: "「我留意到你剛才的反應比較大，我們可以先停一停，呼吸一下。」", type: "pos_neu", reason: "這是一項生理調節建議，目的是幫助你冷靜下來。" },
-        { id: 14, text: "「如果你再這樣不聽指令，我就要通知訓導主任處理。」", type: "neg_pos_neu", reason: "這包含負面情緒與程序警告。雖然語氣重，但明確的後果告知能支援你做出正確決策。" },
-        { id: 15, text: "「你為什麼每次都犯同樣的錯誤？到底有沒有用心聽？」", type: "neg", reason: "這句帶有個人標籤與過度概括，這是不專業的表達方式。" },
-        { id: 16, text: "「全班只有你還沒交功課，你這樣非常不負責任。」", type: "neg", reason: "老師使用了情緒化字眼。面對這種訊息，應將重點放在「補交功課」的事實上。" },
-        { id: 17, text: "「你剛才的行為非常自私，完全沒有顧及其他同學。」", type: "neg", reason: "這句帶有人格批評，反映了老師當下受到你的行為干擾而產生情緒。" },
-        { id: 18, text: "「你這種學習態度，到了 DSE 考試一定會失敗。」", type: "neg", reason: "這是壓力下的負面預言。只需將其視為老師對目前進度的極度焦慮。" },
-        { id: 19, text: "「你不要再不停問同樣的問題了，我很煩。」", type: "neg", reason: "老師表達了個人情緒飽和。這代表目前不是溝通的好時機。" },
-        { id: 20, text: "「我現在沒空理你，你自己去一邊反省一下。」", type: "neg", reason: "這種回應雖然令人不適，但這時暫時遠離衝突現場對你更有利。" },
-        { id: 21, text: "「這點小事你都處理不到嗎？為什麼一定要來麻煩我？」", type: "neg", reason: "這句帶有嘲諷性質，反映的是老師當下的耐性不足，而非你的能力問題。" }
+    let allData = [
+        { id: 1, text: "這份練習你拿回去試試看，不一定要交。", pos: true, neu: true, neg: false, reason: "這是老師提供的額外支援，同時也是給予你練習的彈性而非壓力。" },
+        { id: 2, text: "你的筆掉了，請撿起來。", pos: true, neu: true, neg: false, reason: "維持秩序也是一種支援，讓你能在整潔環境學習。" },
+        { id: 3, text: "如果你再這樣不聽指令，我就要通知訓導主任處理。", pos: true, neu: true, neg: true, reason: "明確的後果告知能支援你做出正確決策。" },
+        { id: 4, text: "我今天預備了多一份筆記給你參考。", pos: true, neu: true, neg: false, reason: "積極的個人化學習協助。" },
+        { id: 5, text: "這題如果你覺得難，可以先跳過。", pos: true, neu: true, neg: false, reason: "教你時間管理策略，降低焦慮。" },
+        { id: 6, text: "全班同學請打開書本第 20 頁。", pos: true, neu: true, neg: false, reason: "建立清晰的課室結構對所有人都是支援。" },
+        { id: 7, text: "如果這題你暫時想不通，我們先討論下一題。", pos: true, neu: true, neg: false, reason: "優化學習流程，保持大腦運作效能。" },
+        { id: 8, text: "我現在要準備下一堂課，有問題請在明天第一節小息找我。", pos: true, neu: true, neg: false, reason: "清晰的預期能支援你更好地安排時間。" },
+        { id: 9, text: "現在是全班分組討論時間，請先跟組員溝通。", pos: true, neu: true, neg: false, reason: "引導遵守當下教學系統規則。" },
+        { id: 10, text: "這題你可以先看參考答案，如果還是不明白，我們課後再談。", pos: true, neu: true, neg: false, reason: "提供自主學習工具並承諾後續支援。" },
+        { id: 11, text: "我看你好像有點氣憤，需要去洗個臉冷靜一下嗎？", pos: true, neu: true, neg: false, reason: "察覺情緒並主動提供緩衝空間。" },
+        { id: 12, text: "這不是針對你個人，這是全班都要遵守的課室守則。", pos: true, neu: true, neg: false, reason: "解釋公平運作邏輯，統一執行規則。" },
+        { id: 13, text: "你剛才的提問很有趣，但我需要先完成這部分的進度才能回應你。", pos: true, neu: true, neg: false, reason: "肯定問題價值，同時維持進度。" },
+        { id: 14, text: "我留意到你剛才的反應比較大，我們可以先停一停，呼吸一下。", pos: true, neu: true, neg: false, reason: "生理調節建議，幫助冷靜。" },
+        { id: 15, text: "你為什麼每次都犯同樣的錯誤？到底有沒有用心聽？", pos: false, neu: false, neg: true, reason: "帶有個人標籤與責備情緒。" },
+        { id: 16, text: "全班只有你還沒交功課，你這樣非常不負責任。", pos: false, neu: false, neg: true, reason: "使用了情緒化字眼評斷人格。" },
+        { id: 17, text: "你剛才的行為非常自私，完全沒有顧及其他同學。", pos: false, neu: false, neg: true, reason: "反映老師當下的負面情緒。" },
+        { id: 18, text: "你這種學習態度，到了 DSE 考試一定會失敗。", pos: false, neu: false, neg: true, reason: "壓力下的負面預言，並非事實。" },
+        { id: 19, text: "你不要再不停問同樣的問題了，我很煩。", pos: false, neu: false, neg: true, reason: "表達個人情緒飽和，非專業回應。" },
+        { id: 20, text: "我現在沒空理你，你自己去一邊反省一下。", pos: false, neu: false, neg: true, reason: "排除式溝通，無助於問題解決。" },
+        { id: 21, text: "這點小事你都處理不到嗎？為什麼一定要來麻煩我？", pos: false, neu: false, neg: true, reason: "帶有嘲諷性質，否定求助需要。" }
     ];
 
     let pool = [...allData];
     let activeItem = null;
     let lastCorrect = false;
+    let editingId = null;
+
+    // 控制角色容器透明度（撳落去嘅彈起效果由 CSS role-container:active 處理）
+    function toggleRole(role) {
+        const tContainer = document.getElementById('container-teacher');
+        const sContainer = document.getElementById('container-student');
+        if (role === 'teacher') {
+            tContainer.classList.toggle('active');
+        } else {
+            sContainer.classList.toggle('active');
+        }
+    }
 
     function speakText(text) {
         window.speechSynthesis.cancel();
-        const msg = new SpeechSynthesisUtterance(text.replace(/「|」/g, ""));
-        const voices = window.speechSynthesis.getVoices();
-        const mandarinVoice = voices.find(v => v.name.includes('Tingting')) ||
-                             voices.find(v => v.lang === 'zh-CN') ||
-                             voices.find(v => v.name.includes('Mandarin')) ||
-                             voices.find(v => v.lang.includes('zh'));
-        if (mandarinVoice) msg.voice = mandarinVoice;
-        msg.lang = 'zh-CN';
-        msg.rate = 0.9;
+        const msg = new SpeechSynthesisUtterance(text);
+        msg.lang = 'zh-HK'; 
         window.speechSynthesis.speak(msg);
     }
 
@@ -177,12 +309,9 @@
 
     function drawNew() {
         if (activeItem) pool.push(activeItem);
-        if (pool.length === 0) {
-            alert("你已完成所有解碼！");
-            pool = [...allData];
-            updateCounter();
-            return;
-        }
+        // 重置角色狀態
+        document.querySelectorAll('.role-container').forEach(c => c.classList.remove('active'));
+        if (pool.length === 0) return;
         const idx = Math.floor(Math.random() * pool.length);
         setMainSentence(pool.splice(idx, 1)[0]);
     }
@@ -194,18 +323,33 @@
         const strip = document.createElement('div');
         strip.className = 'sentence-strip';
         strip.id = 'current-strip';
-        strip.innerHTML = `<span>${activeItem.text}</span><button class="audio-btn" onclick="event.stopPropagation(); speakText('${activeItem.text}')">📢</button>`;
+        // 幫語音按鈕加上彈起效果類別
+        strip.innerHTML = `<span>${activeItem.text}</span><button class="audio-btn lib-item-btn" style="box-shadow: 0 3px 0 #2e7d32;" onclick="event.stopPropagation(); speakText('${activeItem.text}')">📢</button>`;
         area.appendChild(strip);
         makeDraggable(strip);
         updateCounter();
     }
 
-    function selectFromLibrary(id) {
-        if (activeItem && !pool.find(p => p.id === activeItem.id)) pool.push(activeItem);
-        const idx = pool.findIndex(p => p.id === id);
-        const selected = idx > -1 ? pool.splice(idx, 1)[0] : allData.find(p => p.id === id);
-        setMainSentence(selected);
-        closeLibrary();
+    function handleDropLogic(boxType) {
+        if (boxType === 'positive') lastCorrect = activeItem.pos;
+        else if (boxType === 'neutral') lastCorrect = activeItem.neu;
+        else if (boxType === 'negative') lastCorrect = activeItem.neg;
+
+        const strip = document.getElementById('current-strip');
+        if (lastCorrect) strip.style.display = 'none';
+        
+        document.getElementById('fb-quote').textContent = activeItem.text;
+        document.getElementById('feedback-overlay').style.display = 'flex';
+        
+        if (lastCorrect) {
+            document.getElementById('fb-icon').textContent = "🌟";
+            document.getElementById('fb-msg').innerHTML = "<b>解碼正確</b>" + (activeItem.reason ? "<br><br>" + activeItem.reason : "");
+        } else {
+            document.getElementById('fb-icon').textContent = "❓";
+            document.getElementById('fb-msg').textContent = "這個分類好像不太準確，再想一想？";
+            strip.style.transition = '0.3s'; strip.style.left = '50%'; strip.style.top = '50%';
+            strip.style.position = 'absolute'; strip.style.transform = 'translate(-50%, -50%)';
+        }
     }
 
     function makeDraggable(el) {
@@ -262,71 +406,70 @@
         return res;
     }
 
-    function handleDropLogic(boxType) {
-        if (activeItem.type === 'pos_neu') {
-            lastCorrect = (boxType === 'positive' || boxType === 'neutral');
-        } else if (activeItem.type === 'neg_pos_neu') {
-            lastCorrect = (boxType === 'negative' || boxType === 'positive' || boxType === 'neutral');
-        } else if (activeItem.type === 'neg') {
-            lastCorrect = (boxType === 'negative');
-        }
-
-        const strip = document.getElementById('current-strip');
-        if (lastCorrect) strip.style.display = 'none';
-        
-        document.getElementById('fb-quote').textContent = activeItem.text;
-        document.getElementById('feedback-overlay').style.display = 'flex';
-        
-        if (lastCorrect) {
-            document.getElementById('fb-icon').textContent = "🌟";
-            document.getElementById('fb-msg').innerHTML = "<b>解碼正確</b><br><br>" + activeItem.reason;
-            speakText("回答正确");
+    function handleFormSubmit() {
+        const text = document.getElementById('new-text').value.trim();
+        const isPos = document.getElementById('check-pos').checked;
+        const isNeu = document.getElementById('check-neu').checked;
+        const isNeg = document.getElementById('check-neg').checked;
+        if (!text) return;
+        if (editingId !== null) {
+            const idx = allData.findIndex(i => i.id === editingId);
+            allData[idx] = { ...allData[idx], text, pos: isPos, neu: isNeu, neg: isNeg };
+            editingId = null;
         } else {
-            document.getElementById('fb-icon').textContent = "❓";
-            document.getElementById('fb-msg').textContent = "再換個角度想想這句話？";
-            speakText("请再想一想");
-            strip.style.transition = '0.3s'; strip.style.left = '50%'; strip.style.top = '50%';
-            strip.style.position = 'absolute'; strip.style.transform = 'translate(-50%, -50%)';
+            allData.unshift({ id: Date.now(), text, pos: isPos, neu: isNeu, neg: isNeg, reason: "" });
         }
+        resetForm(); refreshLibraryList(); updateCounter();
     }
 
-    function closeFeedback() {
-        document.getElementById('feedback-overlay').style.display = 'none';
-        if (lastCorrect) { document.getElementById('floating-area').innerHTML = ''; activeItem = null; updateCounter(); }
+    function resetForm() {
+        document.getElementById('new-text').value = '';
+        document.querySelectorAll('.checkbox-group input').forEach(i => i.checked = false);
+        document.getElementById('submit-btn').innerText = "加入庫存 +";
+        // 重置表單按鈕陰影
+        document.getElementById('submit-btn').style.boxShadow = "0 4px 0 #bf360c";
     }
 
-    function openLibrary() {
-        const list = document.getElementById('library-content');
-        list.innerHTML = allData.map(s => {
-            let tagsHtml = '';
-            
-            if (s.type === 'pos_neu') {
-                // 根據你的新指令：程序句皆屬於正向支援類別，因此合併標示
-                tagsHtml += `<span class="tag" style="background:#2e7d32">支援</span>`;
-                tagsHtml += `<span class="tag" style="background:#1565c0">程序/中性</span>`;
-            } else if (s.type === 'neg_pos_neu') {
-                tagsHtml += `<span class="tag" style="background:#c62828">警告</span>`;
-                tagsHtml += `<span class="tag" style="background:#2e7d32">支援</span>`;
-                tagsHtml += `<span class="tag" style="background:#1565c0">程序/中性</span>`;
-            } else if (s.type === 'neg') {
-                tagsHtml += `<span class="tag" style="background:#c62828">警告</span>`;
-            }
-
-            return `
-                <div class="lib-item">
-                    <div class="lib-text-group"><span>${s.text}</span></div>
-                    <div class="lib-action-group">
-                        <div class="tag-container">${tagsHtml}</div>
-                        <button class="select-btn" onclick="selectFromLibrary(${s.id})">練習 🎯</button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-        document.getElementById('library-overlay').style.display = 'flex';
+    function refreshLibraryList() {
+        const list = document.getElementById('library-list');
+        list.innerHTML = allData.map(s => `<div class="lib-item">
+            <div class="lib-text-group"><span>${s.text}</span></div>
+            <div class="lib-action-group">
+                <button onclick="startEdit(${s.id})" class="lib-item-btn" style="background:#fb8c00; color:white; box-shadow: 0 3px 0 #ef6c00;">修改</button>
+                <button onclick="selectFromLibrary(${s.id})" class="lib-item-btn" style="background:#3f51b5; color:white; box-shadow: 0 3px 0 #283593;">🎯</button>
+            </div>
+        </div>`).join('');
     }
+
+    function startEdit(id) {
+        const item = allData.find(i => i.id === id);
+        editingId = id;
+        document.getElementById('new-text').value = item.text;
+        document.getElementById('check-pos').checked = item.pos;
+        document.getElementById('check-neu').checked = item.neu;
+        document.getElementById('check-neg').checked = item.neg;
+        document.getElementById('submit-btn').innerText = "儲存修改";
+        document.getElementById('submit-btn').style.boxShadow = "0 4px 0 #ef6c00"; // 修改時按鈕陰影變色
+        document.getElementById('cancel-edit-btn').style.display = "block";
+    }
+
+    function cancelEdit() {
+        resetForm();
+        editingId = null;
+        document.getElementById('cancel-edit-btn').style.display = "none";
+    }
+
+    function selectFromLibrary(id) {
+        if (activeItem && !pool.find(p => p.id === activeItem.id)) pool.push(activeItem);
+        const idx = pool.findIndex(p => p.id === id);
+        const selected = idx > -1 ? pool.splice(idx, 1)[0] : allData.find(p => p.id === id);
+        setMainSentence(selected);
+        closeLibrary();
+    }
+
+    function closeFeedback() { document.getElementById('feedback-overlay').style.display = 'none'; if (lastCorrect) { document.getElementById('floating-area').innerHTML = ''; activeItem = null; updateCounter(); } }
+    function openLibrary() { resetForm(); refreshLibraryList(); document.getElementById('library-overlay').style.display = 'flex'; }
     function closeLibrary() { document.getElementById('library-overlay').style.display = 'none'; }
-    
-    window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
     updateCounter();
 </script>
 </body>
