@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>字詞多面體 - 數量同步修復版</title>
+    <title>字詞多面體 - 21題完整版</title>
     <style>
         html, body {
             overflow: hidden;
@@ -59,6 +59,7 @@
             opacity: 0.3; transition: all 0.3s ease;
         }
         .role-container.active { opacity: 1; transform: scale(1.05); }
+        .role-container:active { transform: translateY(3px) scale(0.98); }
         .role-pic { width: 180px; height: auto; max-height: 180px; object-fit: contain; -webkit-user-drag: none; }
         .role-label { margin-top: -5px; font-weight: bold; color: #37474f; font-size: 1.1rem; }
 
@@ -99,6 +100,8 @@
             justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; backdrop-filter: blur(5px);
         }
 
+        #alert-overlay { z-index: 2000 !important; }
+
         #library-content-wrapper { width: 100%; max-width: 950px; height: 85%; display: flex; flex-direction: column; gap: 15px; overflow: hidden; }
         #library-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; background: #fff; border-radius: 10px; padding: 10px; border: 1px solid #eee; width: 100%; box-sizing: border-box; }
         #library-list::-webkit-scrollbar { width: 8px; }
@@ -118,6 +121,7 @@
         .btn-dark { background: #333; color: white; box-shadow: 0 4px 0 #000; }
         .btn-blue { background: #2196F3; color: white; box-shadow: 0 4px 0 #1976D2; }
         .btn-gray { background: #9e9e9e; color: white; box-shadow: 0 4px 0 #616161; }
+        .btn-red { background: #f44336; color: white; box-shadow: 0 4px 0 #d32f2f; }
     </style>
 </head>
 <body onclick="unlockAudio()">
@@ -144,8 +148,8 @@
 <div id="main-stage"><div id="floating-area"></div></div>
 
 <div id="boxes-container">
-    <div id="box-positive" class="box" data-type="positive">正向 / 支援 👍<br><small>老師在協助我</small></div>
-    <div id="box-neutral" class="box" data-type="neutral">程序 / 中性 🔵<br><small>日常教學流程</small></div>
+    <div id="box-positive" class="box" data-type="positive">正向 / 支援 👍<br><small>提供協助或資源</small></div>
+    <div id="box-neutral" class="box" data-type="neutral">程序 / 中性 🔵<br><small>不帶評價的訊息傳遞</small></div>
     <div id="box-negative" class="box" data-type="negative">警告 / 負面 ⚠️<br><small>情緒或後果預告</small></div>
 </div>
 
@@ -167,6 +171,15 @@
             <button class="dialog-btn btn-gray pushable-btn" onclick="closeConfirm()">取消</button>
             <button class="dialog-btn btn-blue pushable-btn" onclick="executeReset()">確定重置</button>
         </div>
+    </div>
+</div>
+
+<div id="alert-overlay" class="overlay">
+    <div class="feedback-content" style="border-color: #f44336;">
+        <h1 style="font-size: 3.5rem; margin: 10px 0;">⚠️</h1>
+        <h2 style="margin-bottom: 10px; font-size: 1.5rem; color: #d32f2f;">請選擇類別</h2>
+        <p>請至少勾選一個正確類別，否則無法加入庫存。</p>
+        <button class="dialog-btn btn-red pushable-btn" style="margin-top:20px;" onclick="closeAlert()">知道了</button>
     </div>
 </div>
 
@@ -192,8 +205,9 @@
 
 <script>
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function unlockAudio() { if (audioCtx.state === 'suspended') audioCtx.resume(); }
+    function unlockAudio() { if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); }
     function playTone(freq, type, duration, vol) {
+        if (!audioCtx) return;
         const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
         osc.type = type; osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
         gain.gain.setValueAtTime(vol, audioCtx.currentTime);
@@ -204,45 +218,47 @@
     function playSuccessSound() { playTone(660, 'sine', 0.4, 0.2); setTimeout(() => playTone(880, 'sine', 0.5, 0.2), 100); }
     function playErrorSound() { playTone(150, 'sawtooth', 0.5, 0.1); }
 
-    let allData = [
+    // 完整的 21 條句子
+    const defaultData = [
         { id: 1, text: "這份練習你拿回去試試看，不一定要交。", pos: true, neu: true, neg: false, reason: "這是老師提供的額外支援。", practiced: false },
         { id: 2, text: "你的筆掉了，請撿起來。", pos: true, neu: true, neg: false, reason: "維持秩序也是一種支援。", practiced: false },
-        { id: 3, text: "如果你再這樣不聽指令，我就要通知訓導主任處理。", pos: true, neu: true, neg: true, reason: "明確的後果告知。", practiced: false },
+        { id: 3, text: "如果你再這樣不聽指令，我就要通知訓導主任處理。", pos: true, neu: true, neg: true, reason: "明確的後果告知能支援做出正確決策。", practiced: false },
         { id: 4, text: "我今天預備了多一份筆記給你參考。", pos: true, neu: true, neg: false, reason: "積極的個人化學習協助。", practiced: false },
-        { id: 5, text: "這題如果你覺得難，可以先跳過。", pos: true, neu: true, neg: false, reason: "教你時間管理策略。", practiced: false },
+        { id: 5, text: "這題如果你覺得難，可以先跳過。", pos: true, neu: true, neg: false, reason: "教你時間管理策略，降低焦慮。", practiced: false },
         { id: 6, text: "全班同學請打開書本第 20 頁。", pos: true, neu: true, neg: false, reason: "建立清晰的課室結構。", practiced: false },
-        { id: 7, text: "如果這題你暫時想不通，我們先討論下一題。", pos: true, neu: true, neg: false, reason: "優化學習流程。", practiced: false },
-        { id: 8, text: "我現在要準備下一堂課，有問題請在明天第一節小息找我。", pos: true, neu: true, neg: false, reason: "清晰的預期。", practiced: false },
-        { id: 9, text: "現在是全班分組討論時間，請先跟組員溝通。", pos: true, neu: true, neg: false, reason: "引導遵守規則。", practiced: false },
-        { id: 10, text: "這題你可以先看參考答案，如果還是不明白，我們課後再談。", pos: true, neu: true, neg: false, reason: "提供自主學習工具。", practiced: false },
-        { id: 11, text: "我看你好像有點氣憤，需要去洗個臉冷靜一下嗎？", pos: true, neu: true, neg: false, reason: "主動提供緩衝空間。", practiced: false },
+        { id: 7, text: "如果這題你暫時想不通，我們先討論下一題。", pos: true, neu: true, neg: false, reason: "優化學習流程，保持大腦效能。", practiced: false },
+        { id: 8, text: "我現在要準備下一堂課，有問題請在明天第一節小息找我。", pos: true, neu: true, neg: false, reason: "清晰的預期支援安排時間。", practiced: false },
+        { id: 9, text: "現在是全班分組討論時間，請先跟組員溝通。", pos: true, neu: true, neg: false, reason: "引導遵守當下規則。", practiced: false },
+        { id: 10, text: "這題你可以先看參考答案，如果還是不明白，我們課後再談。", pos: true, neu: true, neg: false, reason: "提供自主學習工具並承諾支援。", practiced: false },
+        { id: 11, text: "我看你好像有點氣憤，需要去洗個臉冷靜一下嗎？", pos: true, neu: true, neg: false, reason: "察覺情緒並主動提供緩衝空間。", practiced: false },
         { id: 12, text: "這不是針對你個人，這是全班都要遵守的課室守則。", pos: true, neu: true, neg: false, reason: "解釋公平運作邏輯。", practiced: false },
-        { id: 13, text: "你剛才的提問很有趣，但我需要先完成這部分的進度才能回應你。", pos: true, neu: true, neg: false, reason: "肯定問題價值。", practiced: false },
+        { id: 13, text: "你剛才的提問很有趣，但我需要先完成這部分的進度才能回應你。", pos: true, neu: true, neg: false, reason: "肯定問題價值，同時維持進度。", practiced: false },
         { id: 14, text: "我留意到你剛才的反應比較大，我們可以先停一停，呼吸一下。", pos: true, neu: true, neg: false, reason: "生理調節建議。", practiced: false },
-        { id: 15, text: "你為什麼每次都犯同樣的錯誤？到底有沒有用心聽？", pos: false, neu: false, neg: true, reason: "帶有個人標籤。", practiced: false },
-        { id: 16, text: "全班只有你還沒交功課，你這樣非常不負責任。", pos: false, neu: false, neg: true, reason: "使用了情緒化字眼。", practiced: false },
-        { id: 17, text: "你剛才的行為非常自私，完全沒有顧及其他同學。", pos: false, neu: false, neg: true, reason: "反映負面情緒。", practiced: false },
-        { id: 18, text: "你這種學習態度，到了 DSE 考試一定會失敗。", pos: false, neu: false, neg: true, reason: "壓力下的負面預言。", practiced: false },
-        { id: 19, text: "你不要再不停問同樣的問題了，我很煩。", pos: false, neu: false, neg: true, reason: "表達個人情緒飽和。", practiced: false },
-        { id: 20, text: "我現在沒空理你，你自己去一邊反省一下。", pos: false, neu: false, neg: true, reason: "排除式溝通。", practiced: false },
-        { id: 21, text: "這點小事你都處理不到嗎？為什麼一定要來麻煩我？", pos: false, neu: false, neg: true, reason: "帶有嘲諷性質。", practiced: false }
+        { id: 15, text: "你為什麼每次都犯同樣的錯誤？到底有沒有用心聽？", pos: false, neu: false, neg: true, reason: "帶有個人標籤與責備。", practiced: false },
+        { id: 16, text: "全班只有你還沒交功課，你這樣非常不負責任。", pos: false, neu: false, neg: true, reason: "使用了情緒化字眼評斷人格。", practiced: false },
+        { id: 17, text: "你剛才的行為非常自私，完全沒有顧及其他同學。", pos: false, neu: false, neg: true, reason: "反映老師當下的負面情緒。", practiced: false },
+        { id: 18, text: "你這種學習態度，到了 DSE 考試一定會失敗。", pos: false, neu: false, neg: true, reason: "壓力下的負面預言，並非事實。", practiced: false },
+        { id: 19, text: "你不要再不停問同樣的問題了，我很煩。", pos: false, neu: false, neg: true, reason: "表達個人情緒飽和，非專業回應。", practiced: false },
+        { id: 20, text: "我現在沒空理你，你自己去一邊反省一下。", pos: false, neu: false, neg: true, reason: "排除式溝通，無助於問題解決。", practiced: false },
+        { id: 21, text: "這點小事你都處理不到嗎？為什麼一定要來麻煩我？", pos: false, neu: false, neg: true, reason: "帶有嘲諷性質，否定求助需要。", practiced: false }
     ];
 
+    let allData = [];
+    const savedData = sessionStorage.getItem('polyhedron_data');
+    if (savedData) { allData = JSON.parse(savedData); } else { allData = [...defaultData]; }
+
+    function syncStorage() { sessionStorage.setItem('polyhedron_data', JSON.stringify(allData)); }
     let pool = [...allData.filter(i => !i.practiced)];
     let activeItem = null; let lastCorrect = false; let editingId = null;
 
     function confirmReset() { unlockAudio(); document.getElementById('confirm-overlay').style.display = 'flex'; }
     function closeConfirm() { document.getElementById('confirm-overlay').style.display = 'none'; }
-    function executeReset() { allData.forEach(i => i.practiced = false); pool = [...allData]; document.getElementById('floating-area').innerHTML = ''; activeItem = null; updateCounter(); closeConfirm(); }
+    function closeAlert() { document.getElementById('alert-overlay').style.display = 'none'; }
+    function executeReset() { allData = [...defaultData]; sessionStorage.removeItem('polyhedron_data'); pool = [...allData]; document.getElementById('floating-area').innerHTML = ''; activeItem = null; updateCounter(); closeConfirm(); }
+    
     function toggleRole(role) { unlockAudio(); document.getElementById(`container-${role}`).classList.toggle('active'); }
     function speakText(text) { unlockAudio(); window.speechSynthesis.cancel(); const msg = new SpeechSynthesisUtterance(text); msg.lang = 'zh-HK'; window.speechSynthesis.speak(msg); }
-    
-    // 修正：剩餘題目 = 池子裡的數量 + 當前正在畫面上的一題
-    function updateCounter() { 
-        let count = pool.length;
-        if (activeItem && !activeItem.practiced) count += 1;
-        document.getElementById('count-num').textContent = count; 
-    }
+    function updateCounter() { let count = pool.length; if (activeItem && !activeItem.practiced) count += 1; document.getElementById('count-num').textContent = count; }
 
     function drawNew() {
         unlockAudio(); if (activeItem && !activeItem.practiced) pool.push(activeItem);
@@ -264,14 +280,7 @@
         else if (boxType === 'negative') lastCorrect = activeItem.neg;
         document.getElementById('fb-quote').textContent = activeItem.text;
         document.getElementById('feedback-overlay').style.display = 'flex';
-        if (lastCorrect) { 
-            playSuccessSound(); 
-            document.getElementById('current-strip').style.display = 'none'; 
-            document.getElementById('fb-icon').textContent = "🌟"; 
-            document.getElementById('fb-msg').innerHTML = "<b>解碼正確</b><br><br>" + (activeItem.reason || ""); 
-            activeItem.practiced = true; 
-            updateCounter();
-        }
+        if (lastCorrect) { playSuccessSound(); document.getElementById('current-strip').style.display = 'none'; document.getElementById('fb-icon').textContent = "🌟"; document.getElementById('fb-msg').innerHTML = "<b>解碼正確</b><br><br>" + (activeItem.reason || ""); activeItem.practiced = true; syncStorage(); updateCounter(); }
         else { playErrorSound(); document.getElementById('fb-icon').textContent = "❓"; document.getElementById('fb-msg').textContent = "分類不太準確，再想一想？"; const strip = document.getElementById('current-strip'); strip.style.transition = '0.3s'; strip.style.left = '50%'; strip.style.top = '50%'; strip.style.position = 'absolute'; strip.style.transform = 'translate(-50%, -50%)'; }
     }
 
@@ -286,20 +295,31 @@
     function getBoxAtPoint(x, y) { const elements = document.elementsFromPoint(x, y); return elements.find(el => el.classList.contains('box')); }
 
     function handleFormSubmit() {
-        const text = document.getElementById('new-text').value.trim(); const isPos = document.getElementById('check-pos').checked; const isNeu = document.getElementById('check-neu').checked; const isNeg = document.getElementById('check-neg').checked;
+        const text = document.getElementById('new-text').value.trim();
+        const isPos = document.getElementById('check-pos').checked;
+        const isNeu = document.getElementById('check-neu').checked;
+        const isNeg = document.getElementById('check-neg').checked;
         if (!text) return;
-        if (editingId !== null) { 
-            const idx = allData.findIndex(i => i.id === editingId); 
-            allData[idx] = { ...allData[idx], text, pos: isPos, neu: isNeu, neg: isNeg }; 
-            editingId = null; 
+        if (!isPos && !isNeu && !isNeg) { document.getElementById('alert-overlay').style.display = 'flex'; return; }
+
+        if (editingId !== null) {
+            const idx = allData.findIndex(i => i.id === editingId);
+            allData[idx] = { ...allData[idx], text, pos: isPos, neu: isNeu, neg: isNeg };
+            const poolIdx = pool.findIndex(p => p.id === editingId);
+            if (poolIdx > -1) pool[poolIdx] = { ...pool[poolIdx], text, pos: isPos, neu: isNeu, neg: isNeg };
+            if (activeItem && activeItem.id === editingId) {
+                activeItem = { ...activeItem, text, pos: isPos, neu: isNeu, neg: isNeg };
+                const strip = document.getElementById('current-strip');
+                if (strip) strip.querySelector('span').innerText = text;
+            }
+            editingId = null;
+        } else {
+            const newItem = { id: Date.now(), text, pos: isPos, neu: isNeu, neg: isNeg, reason: "", practiced: false };
+            allData.unshift(newItem); pool.push(newItem);
         }
-        else { 
-            const newItem = { id: Date.now(), text, pos: isPos, neu: isNeu, neg: isNeg, reason: "", practiced: false }; 
-            allData.unshift(newItem); 
-            pool.push(newItem); // 新增即時入池
-        }
-        resetForm(); refreshLibraryList(); updateCounter(); // 確保調用 updateCounter 同步主介面
+        syncStorage(); resetForm(); refreshLibraryList(); updateCounter();
     }
+
     function resetForm() { document.getElementById('new-text').value = ''; document.getElementById('check-pos').checked = false; document.getElementById('check-neu').checked = false; document.getElementById('check-neg').checked = false; document.getElementById('submit-btn').innerText = "加入庫存 +"; }
 
     function refreshLibraryList() {
@@ -311,12 +331,7 @@
             if (s.neg) tagsHtml += `<span class="tag" style="background:#c62828">警告</span>`;
             const practicedClass = s.practiced ? 'practiced' : '';
             const practicedBtnText = s.practiced ? '已練習 ✔️' : '練習 🎯';
-            return `<div class="lib-item ${practicedClass}">
-                <div style="flex:1;"><b>${s.text}</b><div class="tag-container">${tagsHtml}</div></div>
-                <div style="display:flex; gap:5px;">
-                    <button onclick="startEdit(${s.id})" style="background:#fb8c00; color:white; border:none; padding:8px 12px; border-radius:4px;">修改</button>
-                    <button onclick="selectFromLibrary(${s.id})" style="background:#3f51b5; color:white; border:none; padding:8px 12px; border-radius:4px;">${practicedBtnText}</button>
-                </div></div>`;
+            return `<div class="lib-item ${practicedClass}"><div style="flex:1;"><b>${s.text}</b><div class="tag-container">${tagsHtml}</div></div><div style="display:flex; gap:5px;"><button onclick="startEdit(${s.id})" style="background:#fb8c00; color:white; border:none; padding:8px 12px; border-radius:4px;">修改</button><button onclick="selectFromLibrary(${s.id})" style="background:#3f51b5; color:white; border:none; padding:8px 12px; border-radius:4px;">${practicedBtnText}</button></div></div>`;
         }).join('');
     }
 
